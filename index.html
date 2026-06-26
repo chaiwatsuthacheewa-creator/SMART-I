@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Smart Maintenance Pro</title>
 
-<!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<!-- Libraries -->
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -183,9 +181,7 @@
 
   <div class="view-content-area" id="mainScrollArea">
     
-    <!-- 1. UNIFIED DASHBOARD -->
     <div id="view-unified" class="view-section active">
-        <!-- Grand Total -->
         <div class="section-title"><i data-lucide="globe" class="text-indigo-500"></i> สรุปภาพรวมทั้งระบบ (Line + Smartcare) <span class="text-sm font-normal text-muted ml-2 filter-label"></span></div>
         <div class="grid-5 mb-8">
             <div class="kpi-card border-indigo-500/30" onclick="window.openUniversalModal('grand', 'total')">
@@ -211,7 +207,6 @@
         </div>
 
         <div class="grid-2">
-            <!-- Line Summary -->
             <div class="widget-box border-t-4 border-t-primary">
                 <div class="section-title"><i data-lucide="message-square" class="text-primary"></i> ข้อมูลระบบ Line Bot <span class="text-sm font-normal text-muted ml-auto filter-label"></span></div>
                 <div class="grid-2">
@@ -222,7 +217,6 @@
                 </div>
             </div>
 
-            <!-- Smartcare Summary -->
             <div class="widget-box border-t-4 border-t-purple-500">
                 <div class="section-title"><i data-lucide="file-spreadsheet" class="text-purple-500"></i> ข้อมูลระบบ Smartcare <span class="text-sm font-normal text-muted ml-auto filter-label"></span></div>
                 <div id="u-smartcare-empty" class="text-center py-8 text-muted">
@@ -240,7 +234,6 @@
         </div>
     </div>
 
-    <!-- 2. LINE BOT DASHBOARD -->
     <div id="view-line" class="view-section">
         <div class="section-title text-primary"><i data-lucide="message-square"></i> แดชบอร์ดข้อมูล Line Bot <span class="text-sm font-normal text-muted ml-2 filter-label"></span></div>
         
@@ -276,7 +269,6 @@
         </div>
     </div>
 
-    <!-- 3. SMARTCARE DASHBOARD -->
     <div id="view-smartcare" class="view-section">
         <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
             <div class="section-title text-purple-500 m-0"><i data-lucide="file-spreadsheet"></i> แดชบอร์ดประมวลผล Smartcare <span class="text-sm font-normal text-muted ml-2 filter-label"></span></div>
@@ -292,7 +284,6 @@
         </div>
 
         <div id="sc-dash-section" style="display: none; flex-direction: column; gap: 16px;">
-            <!-- Top KPI Row -->
             <div class="grid grid-cols-4 gap-4 sc-layout-top">
                 <div class="sc-card sc-card-hover flex justify-between items-start" onclick="window.openUniversalModal('smartcare', 'total')">
                     <div><div class="text-sm font-medium text-muted mb-1">งานที่เข้าเกณฑ์ SLA</div><div class="sc-kpi-val num text-main text-2xl font-bold" id="sc-ui-total">0</div><div class="text-[10px] text-muted mt-1">Submit -> Accept -> Done</div></div>
@@ -312,9 +303,7 @@
                 </div>
             </div>
 
-            <!-- Middle Row (Donut, Over/Vote, Bars) -->
             <div class="grid grid-cols-3 gap-4 sc-layout-mid">
-                <!-- Donut -->
                 <div class="sc-card">
                     <div class="font-bold text-sm mb-1 flex items-center gap-2 text-main"><i data-lucide="pie-chart" class="w-4 h-4 text-indigo-500"></i> ภาพรวม SLA (วันทำงาน)</div>
                     <div class="text-[10px] text-muted mb-6">คำนวณจากเวลาที่ Accept จนถึง Done</div>
@@ -334,7 +323,6 @@
                     </div>
                 </div>
 
-                <!-- Over SLA & Vote -->
                 <div class="flex flex-col gap-4">
                     <div class="sc-card sc-card-hover flex-1 flex flex-col justify-center" onclick="window.openUniversalModal('smartcare', 'sla')">
                         <div class="flex justify-between items-start">
@@ -342,7 +330,6 @@
                             <div class="w-8 h-8 rounded-md bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-500"><i data-lucide="alert-triangle" class="w-4 h-4"></i></div>
                         </div>
                     </div>
-                    <!-- Vote Card (Independent) -->
                     <div class="sc-card sc-gradient-card flex-1 flex flex-col justify-center shadow-lg shadow-purple-500/30">
                         <i data-lucide="star" class="absolute -right-4 -bottom-4 w-24 h-24 opacity-20"></i>
                         <div class="text-xs font-medium mb-1 opacity-90">คะแนนโหวตเฉลี่ย (CSAT)</div>
@@ -354,7 +341,6 @@
                     </div>
                 </div>
 
-                <!-- Category Bars -->
                 <div class="sc-card flex flex-col">
                     <div class="font-bold text-sm mb-1 flex items-center gap-2 text-main"><i data-lucide="list-check" class="w-4 h-4 text-indigo-500"></i> SLA แยกตามประเภทงาน</div>
                     <div class="text-[10px] text-muted mb-4">อัตราส่วนงานที่เสร็จตรงเวลา (%)</div>
@@ -362,13 +348,11 @@
                 </div>
             </div>
 
-            <!-- Category Cards (4 cols) -->
             <div>
                 <h3 class="text-sm font-bold text-main mb-3 flex items-center gap-2"><i data-lucide="tags" class="w-4 h-4 text-indigo-500"></i> สรุปงานซ่อมแยกประเภทหลัก</h3>
                 <div class="grid grid-cols-4 gap-4 sc-layout-bot" id="sc-ui-cat-cards"></div>
             </div>
 
-            <!-- Bottom Row (Chart & Table) -->
             <div class="grid grid-cols-2 gap-4 sc-layout-bot">
                 <div class="sc-card flex flex-col h-[350px]">
                     <h3 class="text-sm font-bold text-main mb-4 flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-indigo-500"></i> สถิติการใช้บริการแยกตามฝ่าย (Top 10)</h3>
@@ -388,7 +372,6 @@
         </div>
     </div>
 
-    <!-- 4. LINE BUILDINGS -->
     <div id="view-buildings-line" class="view-section widget-box">
         <div class="section-title mb-4"><i data-lucide="building-2" class="text-primary"></i> ข้อมูลเจาะลึกรายอาคาร (Line)</div>
         <div class="flex gap-2 flex-wrap mb-6" id="lineBuildingTabs"></div>
@@ -401,7 +384,6 @@
         <div class="text-xs text-muted mt-3">* คลิกแถวเพื่อดูรายละเอียดแบบเต็ม (Full Detail)</div>
     </div>
 
-    <!-- 5. SMARTCARE CATEGORIES -->
     <div id="view-buildings-sc" class="view-section widget-box">
         <div class="section-title mb-4"><i data-lucide="tags" class="text-purple-500"></i> ข้อมูลเจาะลึกรายหมวดหมู่งาน (Smartcare)</div>
         <div class="flex gap-2 flex-wrap mb-6" id="scBuildingTabs"></div>
@@ -414,13 +396,11 @@
         <div class="text-xs text-muted mt-3">* คลิกแถวเพื่อดูรายละเอียดแบบเต็ม (Full Detail)</div>
     </div>
 
-    <!-- 6. RECURRING JOBS -->
     <div id="view-recurring" class="view-section">
         <div class="section-title text-teal-500 mb-2"><i data-lucide="repeat"></i> วิเคราะห์งานเกิดซ้ำ (Recurring Jobs) <span class="text-sm font-normal text-muted ml-2 filter-label"></span></div>
         <p class="text-sm text-muted mb-6">กรองฉลาด: แยกตึก, แยกเดือน และจับกลุ่ม Keyword อัตโนมัติ (คลิกที่แถวเพื่อดูรายการ Ticket)</p>
         
         <div class="grid-2">
-            <!-- Line Recurring -->
             <div class="widget-box border-t-4 border-primary flex flex-col">
                 <div class="font-bold text-primary mb-4 flex items-center gap-2"><i data-lucide="message-square"></i> ระบบ Line Bot</div>
                 <div class="table-container flex-grow h-[450px]">
@@ -431,7 +411,6 @@
                 </div>
             </div>
             
-            <!-- Smartcare Recurring -->
             <div class="widget-box border-t-4 border-purple-500 flex flex-col">
                 <div class="font-bold text-purple-500 mb-4 flex items-center gap-2"><i data-lucide="file-spreadsheet"></i> ระบบ Smartcare</div>
                 <div class="table-container flex-grow h-[450px]">
@@ -444,12 +423,10 @@
         </div>
     </div>
 
-    <!-- 7. SETTINGS (SLA Configuration & Export) -->
     <div id="view-settings" class="view-section widget-box max-w-4xl mx-auto w-full mt-8">
         <div class="section-title justify-center text-xl mb-8 border-b border-card-border pb-4"><i data-lucide="settings" class="text-primary"></i> ระบบตั้งค่าเป้าหมาย SLA (แยก 2 ระบบ)</div>
         
         <div class="grid-2 gap-8">
-            <!-- Line SLA Settings -->
             <div>
                 <h3 class="font-bold text-primary mb-4 flex items-center gap-2"><i data-lucide="message-square" class="w-5 h-5"></i> Line Bot (เป้าหมายแยกตามตึก)</h3>
                 <div class="border border-card-border rounded-lg bg-base overflow-hidden">
@@ -460,7 +437,6 @@
                 </div>
             </div>
 
-            <!-- Smartcare SLA Settings -->
             <div>
                 <h3 class="font-bold text-purple-500 mb-4 flex items-center gap-2"><i data-lucide="file-spreadsheet" class="w-5 h-5"></i> Smartcare (เป้าหมายแยกตามหมวดหมู่)</h3>
                 <div class="border border-card-border rounded-lg bg-base overflow-hidden">
@@ -475,10 +451,8 @@
         </div>
         <button class="mt-8 w-full py-3 bg-primary text-white rounded-lg font-bold text-lg hover:bg-blue-600 shadow-lg shadow-blue-500/30 transition transform hover:-translate-y-1" onclick="window.saveSlaSettings()">บันทึกการตั้งค่า</button>
 
-        <!-- Export Over SLA Reports -->
         <div class="section-title justify-center text-xl mb-6 mt-16 border-b border-card-border pb-4"><i data-lucide="download" class="text-teal-500"></i> ส่งออกข้อมูลงานล่าช้า (Export Over SLA)</div>
         <div class="grid-2 gap-8">
-            <!-- Export Line -->
             <div class="border border-[var(--card-border)] rounded-lg bg-[var(--card-bg)] p-6 text-center flex flex-col items-center justify-center transition hover:border-primary shadow-sm hover:shadow-md">
                 <i data-lucide="message-square" class="w-10 h-10 text-primary mb-3"></i>
                 <h3 class="font-bold text-lg mb-1 text-main">Line Bot (เกิน SLA)</h3>
@@ -488,7 +462,6 @@
                     <button onclick="window.exportOverSLA('line', 'pdf')" class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg flex items-center gap-2 font-medium transition shadow-md shadow-rose-500/20"><i data-lucide="file-text" class="w-4 h-4"></i> PDF</button>
                 </div>
             </div>
-            <!-- Export Smartcare -->
             <div class="border border-[var(--card-border)] rounded-lg bg-[var(--card-bg)] p-6 text-center flex flex-col items-center justify-center transition hover:border-purple-500 shadow-sm hover:shadow-md">
                 <i data-lucide="file-spreadsheet" class="w-10 h-10 text-purple-500 mb-3"></i>
                 <h3 class="font-bold text-lg mb-1 text-purple-500">Smartcare (เกิน SLA)</h3>
@@ -504,9 +477,6 @@
   </div>
 </div>
 
-<!-- ================= MODALS ================= -->
-
-<!-- Universal List Modal (Popup สำหรับกดจากการ์ด) -->
 <div class="modal-overlay" id="universalModal" onclick="if(event.target===this) window.closeUniversalModal()">
     <div class="modal-content">
         <div class="modal-header">
@@ -521,7 +491,6 @@
     </div>
 </div>
 
-<!-- Full Detail Ticket Modal -->
 <div class="modal-overlay" id="ticketModal" onclick="if(event.target===this) window.closeTicketModal()">
     <div class="modal-content ticket-modal-content">
         <div class="modal-header">
@@ -532,15 +501,11 @@
     </div>
 </div>
 
-<!-- Toast -->
 <div id="toast"><i data-lucide="check-circle" id="toastIcon"></i> <span id="toastText">สำเร็จ</span></div>
 
-<!-- ================= JAVASCRIPT ================= -->
 <script>
 // ================= API ENDPOINTS =================
 const LINE_API_URL = "https://script.google.com/macros/s/AKfycbygiyeaAfjPr3dfl8JyFd_d-VeyuTfvlHl_PcJk4j-dZZY2lvCIOTC1SrZJ4yMvXau2GA/exec";
-
-// ⚠️ นำ URL จาก Google Apps Script (Smartcare) มาวางในเครื่องหมายคำพูดด้านล่างนี้
 const SC_API_URL = "https://script.google.com/macros/s/AKfycbygiyeaAfjPr3dfl8JyFd_d-VeyuTfvlHl_PcJk4j-dZZY2lvCIOTC1SrZJ4yMvXau2GA/exec"; 
 
 const THAI_HOLIDAYS = [ "2024-01-01", "2024-04-15", "2024-05-01", "2024-12-05", "2025-01-01", "2025-04-14", "2025-04-15", "2025-12-05", "2026-01-01", "2026-04-13", "2026-04-14", "2026-12-05" ];
@@ -616,9 +581,11 @@ window.switchView = (targetId) => {
 };
 
 // --- API Loaders ---
+// เพิ่ม ?sys=line&nocache=... เพื่อป้องกันการจำค่าเก่าของเบราว์เซอร์ 100%
 async function fetchLineData() {
     try {
-        const res = await fetch(LINE_API_URL);
+        const url = `${LINE_API_URL}?sys=line&nocache=${Date.now()}`;
+        const res = await fetch(url);
         if(!res.ok) throw new Error("API Err");
         const data = await res.json();
         if(Array.isArray(data)) {
@@ -641,10 +608,12 @@ async function fetchLineData() {
     } catch (e) { console.error(e); window.showToast("ดึงข้อมูล Line ไม่สำเร็จ", true); }
 }
 
+// เพิ่ม ?sys=sc&nocache=... เพื่อป้องกันการจำค่าเก่าของเบราว์เซอร์ 100%
 async function fetchSmartcareData() {
     if(!SC_API_URL) return;
     try {
-        const res = await fetch(SC_API_URL);
+        const url = `${SC_API_URL}?sys=sc&nocache=${Date.now()}`;
+        const res = await fetch(url);
         const data = await res.json();
         
         if(data && data.tickets && Array.isArray(data.tickets)) {
@@ -1185,7 +1154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     document.getElementById('monthFilter').value = new Date().getMonth().toString();
     window.showToast("กำลังดึงข้อมูลล่าสุดจาก Cloud...", false); 
-    // โหลด 2 ฝั่งพร้อมกันเพื่อความเร็ว
+    // โหลด 2 ฝั่งพร้อมกันเพื่อความเร็ว (มี Anti-cache เรียบร้อย)
     await Promise.all([fetchLineData(), fetchSmartcareData()]);
     updateYearFilterOptions(); window.applyGlobalFilter(); 
     window.showToast("พร้อมใช้งาน");
