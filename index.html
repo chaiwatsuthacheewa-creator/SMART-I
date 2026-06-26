@@ -5,12 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Smart Maintenance Pro</title>
 
+<!-- Fonts & Libraries -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
 <script>
     tailwind.config = {
@@ -51,7 +53,7 @@
   .menu-icon.bottom { margin-top: auto; margin-bottom: 0;}
 
   /* ================= 🖥️ Main Wrapper ================= */
-  .main-wrapper { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  .main-wrapper { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; position: relative;}
   .app-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; background: var(--card-bg); border-bottom: 1px solid var(--card-border); flex-shrink: 0; z-index: 30; gap: 16px; flex-wrap: wrap; transition: 0.3s;}
   .app-title { font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 12px; }
   .header-controls { display: flex; gap: 12px; flex-wrap: wrap;}
@@ -95,14 +97,12 @@
   .pill-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
   .pill-primary { background: rgba(59, 130, 246, 0.15); color: var(--primary); }
 
-  /* Tab Buttons (Universal) */
   .tab-btn { padding: 8px 16px; border-radius: var(--radius-md); border: 1px solid var(--card-border); background: var(--bg-base); color: var(--text-muted); font-weight: 500; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; cursor: pointer; white-space: nowrap; font-size: 0.9rem;}
   .tab-btn:hover { background: var(--card-bg); color: var(--primary); border-color: var(--primary); }
   .tab-btn.active { background: var(--primary); color: #ffffff; border-color: var(--primary); box-shadow: var(--shadow-md); }
   .tab-btn.active .num { color: #ffffff; opacity: 0.8; }
   .tab-btn.active-purple { background: var(--purple); border-color: var(--purple); }
 
-  /* Tables */
   .table-container { overflow-x: auto; border: 1px solid var(--card-border); border-radius: var(--radius-md); background: var(--bg-base); }
   table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
   th { color: var(--text-muted); font-weight: 600; padding: 12px 16px; border-bottom: 1px solid var(--card-border); background: var(--card-bg); position: sticky; top: 0; z-index: 10; white-space: nowrap;}
@@ -110,7 +110,7 @@
   tr.clickable { transition: 0.2s; }
   tr.clickable:hover td { background: var(--sidebar-active-bg); cursor: pointer; }
 
-  /* ================= 🗔 Modals ================= */
+  /* ================= 🗔 Modals & Loader ================= */
   .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(6px); z-index: 1000; display: none; justify-content: center; align-items: center; opacity: 0; transition: 0.3s; padding: 20px; }
   .modal-overlay.show { display: flex; opacity: 1; }
   .modal-content { background: var(--bg-base); border: 1px solid var(--card-border); border-radius: var(--radius-lg); width: 100%; max-width: 950px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: scale(0.95); transition: 0.3s; overflow: hidden; }
@@ -123,6 +123,9 @@
   .ticket-field-box { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; }
   .ticket-field-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
   .ticket-field-val { font-size: 0.95rem; font-weight: 500; color: var(--text-main); word-break: break-word;}
+
+  /* Initial Full Screen Loader */
+  #initialLoader { position: fixed; inset: 0; background: var(--bg-base); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
   
   #toast { position: fixed; bottom: 24px; right: 24px; background: var(--success); color: white; padding: 12px 24px; border-radius: var(--radius-md); font-weight: 500; font-size: 0.9rem; box-shadow: var(--shadow-md); transform: translateY(100px); opacity: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; display: flex; align-items: center; gap: 8px; pointer-events: none;}
   #toast.show { transform: translateY(0); opacity: 1; }
@@ -148,6 +151,13 @@
 </head>
 <body class="dark-theme">
 
+<!-- หน้าจอ Loading ตอนเข้าเว็บครั้งแรก -->
+<div id="initialLoader">
+    <i data-lucide="loader-2" class="w-16 h-16 text-primary animate-spin mb-6"></i>
+    <h2 class="text-2xl font-bold text-main mb-2">Smart Maintenance Pro</h2>
+    <p id="initialLoaderText" class="text-muted text-sm flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> กำลังดึงข้อมูลล่าสุดจาก Cloud...</p>
+</div>
+
 <nav class="sidebar">
   <div class="sidebar-logo" onclick="window.switchView('view-unified')" title="ภาพรวมทั้งระบบ"><i data-lucide="rocket"></i></div>
   <div class="menu-icon active" onclick="window.switchView('view-unified')" data-target="view-unified" title="ภาพรวมทั้งระบบ"><i data-lucide="layout-dashboard"></i></div>
@@ -168,7 +178,8 @@
         <option value="all">ทุกปี</option>
       </select>
       <select id="monthFilter" class="custom-input" onchange="window.applyGlobalFilter()">
-        <option value="all">รวมทุกเดือน</option>
+        <!-- บังคับค่าเริ่มต้นให้ดึงทุกเดือนเพื่อป้องกันจอว่างตอนโหลดแรก -->
+        <option value="all" selected>รวมทุกเดือน</option>
         <option value="0">มกราคม</option> <option value="1">กุมภาพันธ์</option> <option value="2">มีนาคม</option>
         <option value="3">เมษายน</option> <option value="4">พฤษภาคม</option> <option value="5">มิถุนายน</option>
         <option value="6">กรกฎาคม</option> <option value="7">สิงหาคม</option> <option value="8">กันยายน</option>
@@ -181,32 +192,19 @@
 
   <div class="view-content-area" id="mainScrollArea">
     
+    <!-- 1. UNIFIED DASHBOARD -->
     <div id="view-unified" class="view-section active">
         <div class="section-title"><i data-lucide="globe" class="text-indigo-500"></i> สรุปภาพรวมทั้งระบบ (Line + Smartcare) <span class="text-sm font-normal text-muted ml-2 filter-label"></span></div>
         <div class="grid-5 mb-8">
-            <div class="kpi-card border-indigo-500/30" onclick="window.openUniversalModal('grand', 'total')">
-                <div class="k-label text-indigo-500">งานทั้งหมด <i data-lucide="chevron-right" class="w-4 h-4 opacity-50"></i></div>
-                <div class="k-val text-indigo-500 num" id="u-grand-total">0</div><i data-lucide="layers" class="card-bg-icon text-indigo-500"></i>
-            </div>
-            <div class="kpi-card border-emerald-500/30" onclick="window.openUniversalModal('grand', 'completed')">
-                <div class="k-label text-emerald-500">เสร็จสมบูรณ์ <i data-lucide="chevron-right" class="w-4 h-4 opacity-50"></i></div>
-                <div class="k-val text-emerald-500 num" id="u-grand-done">0</div><i data-lucide="check-circle" class="card-bg-icon text-emerald-500"></i>
-            </div>
-            <div class="kpi-card border-sky-500/30" onclick="window.openUniversalModal('grand', 'accept')">
-                <div class="k-label text-sky-500">กำลังดำเนินการ <i data-lucide="chevron-right" class="w-4 h-4 opacity-50"></i></div>
-                <div class="k-val text-sky-500 num" id="u-grand-accept">0</div><i data-lucide="loader-2" class="card-bg-icon text-sky-500"></i>
-            </div>
-            <div class="kpi-card border-amber-500/30" onclick="window.openUniversalModal('grand', 'pending')">
-                <div class="k-label text-amber-500">รอดำเนินการ <i data-lucide="chevron-right" class="w-4 h-4 opacity-50"></i></div>
-                <div class="k-val text-amber-500 num" id="u-grand-pending">0</div><i data-lucide="clock" class="card-bg-icon text-amber-500"></i>
-            </div>
-            <div class="kpi-card border-rose-500/30" onclick="window.openUniversalModal('grand', 'sla')">
-                <div class="k-label text-rose-500">เกิน SLA ถาวร <i data-lucide="chevron-right" class="w-4 h-4 opacity-50"></i></div>
-                <div class="k-val text-rose-500 num" id="u-grand-sla">0</div><i data-lucide="alert-triangle" class="card-bg-icon text-rose-500"></i>
-            </div>
+            <div class="kpi-card border-indigo-500/30" onclick="window.openUniversalModal('grand', 'total')"><div class="k-label text-indigo-500">งานทั้งหมด <i data-lucide="chevron-right" class="w-4 h-4 opacity-50"></i></div><div class="k-val text-indigo-500 num" id="u-grand-total">0</div><i data-lucide="layers" class="card-bg-icon text-indigo-500"></i></div>
+            <div class="kpi-card border-emerald-500/30" onclick="window.openUniversalModal('grand', 'completed')"><div class="k-label text-emerald-500">เสร็จสมบูรณ์ <i data-lucide="chevron-right" class="w-4 h-4 opacity-50"></i></div><div class="k-val text-emerald-500 num" id="u-grand-done">0</div><i data-lucide="check-circle" class="card-bg-icon text-emerald-500"></i></div>
+            <div class="kpi-card border-sky-500/30" onclick="window.openUniversalModal('grand', 'accept')"><div class="k-label text-sky-500">กำลังดำเนินการ <i data-lucide="chevron-right" class="w-4 h-4 opacity-50"></i></div><div class="k-val text-sky-500 num" id="u-grand-accept">0</div><i data-lucide="loader-2" class="card-bg-icon text-sky-500"></i></div>
+            <div class="kpi-card border-amber-500/30" onclick="window.openUniversalModal('grand', 'pending')"><div class="k-label text-amber-500">รอดำเนินการ <i data-lucide="chevron-right" class="w-4 h-4 opacity-50"></i></div><div class="k-val text-amber-500 num" id="u-grand-pending">0</div><i data-lucide="clock" class="card-bg-icon text-amber-500"></i></div>
+            <div class="kpi-card border-rose-500/30" onclick="window.openUniversalModal('grand', 'sla')"><div class="k-label text-rose-500">เกิน SLA ถาวร <i data-lucide="chevron-right" class="w-4 h-4 opacity-50"></i></div><div class="k-val text-rose-500 num" id="u-grand-sla">0</div><i data-lucide="alert-triangle" class="card-bg-icon text-rose-500"></i></div>
         </div>
 
         <div class="grid-2">
+            <!-- Line Summary -->
             <div class="widget-box border-t-4 border-t-primary">
                 <div class="section-title"><i data-lucide="message-square" class="text-primary"></i> ข้อมูลระบบ Line Bot <span class="text-sm font-normal text-muted ml-auto filter-label"></span></div>
                 <div class="grid-2">
@@ -217,10 +215,11 @@
                 </div>
             </div>
 
+            <!-- Smartcare Summary -->
             <div class="widget-box border-t-4 border-t-purple-500">
                 <div class="section-title"><i data-lucide="file-spreadsheet" class="text-purple-500"></i> ข้อมูลระบบ Smartcare <span class="text-sm font-normal text-muted ml-auto filter-label"></span></div>
                 <div id="u-smartcare-empty" class="text-center py-8 text-muted">
-                    <i data-lucide="file-x-2" class="mx-auto mb-2 opacity-50" style="width:40px; height:40px;"></i><p class="text-sm">ยังไม่มีข้อมูลในระบบ</p>
+                    <i data-lucide="cloud-off" class="mx-auto mb-2 opacity-50" style="width:40px; height:40px;"></i><p class="text-sm">ไม่มีข้อมูลใน Cloud กรุณาให้ Admin อัปโหลดไฟล์ Excel</p>
                 </div>
                 <div id="u-smartcare-data" style="display: none; flex-direction: column;">
                     <div class="grid-2 flex-grow">
@@ -234,277 +233,161 @@
         </div>
     </div>
 
+    <!-- 2. LINE BOT DASHBOARD -->
     <div id="view-line" class="view-section">
         <div class="section-title text-primary"><i data-lucide="message-square"></i> แดชบอร์ดข้อมูล Line Bot <span class="text-sm font-normal text-muted ml-2 filter-label"></span></div>
-        
         <div class="grid-4 mb-6">
             <div class="kpi-card" onclick="window.openUniversalModal('line', 'total')"><div class="k-label">งานรับแจ้งทั้งหมด</div><div class="k-val text-primary num" id="line-full-total">0</div><i data-lucide="clipboard-list" class="card-bg-icon text-primary"></i></div>
             <div class="kpi-card" onclick="window.openUniversalModal('line', 'pending')"><div class="k-label">รอดำเนินการ (Pending)</div><div class="k-val text-warning num" id="line-full-pending">0</div><i data-lucide="clock" class="card-bg-icon text-warning"></i></div>
             <div class="kpi-card" onclick="window.openUniversalModal('line', 'completed')"><div class="k-label">เสร็จสิ้น (Completed)</div><div class="k-val text-success num" id="line-full-done">0</div><i data-lucide="check-circle" class="card-bg-icon text-success"></i></div>
             <div class="kpi-card" onclick="window.openUniversalModal('line', 'sla')"><div class="k-label text-rose-500">เกิน SLA ถาวร</div><div class="k-val text-danger num" id="line-full-sla">0</div><i data-lucide="alert-triangle" class="card-bg-icon text-danger"></i></div>
         </div>
-
         <div class="grid-2">
             <div class="flex flex-col gap-4">
                 <div class="widget-box">
                     <div class="font-medium mb-4 text-muted flex justify-between">สรุปแยกตามอาคาร <span class="text-primary text-sm cursor-pointer hover:underline" onclick="window.switchView('view-buildings-line')">เจาะลึก ></span></div>
                     <div class="grid-3" id="lineBuildingContainer"></div>
                 </div>
-                <div class="widget-box flex-grow">
-                    <div class="font-medium mb-4 text-muted">Trend เปรียบเทียบงาน</div>
-                    <div class="relative h-[250px]"><canvas id="lineTrendChart"></canvas></div>
-                </div>
+                <div class="widget-box flex-grow"><div class="font-medium mb-4 text-muted">Trend เปรียบเทียบงาน</div><div class="relative h-[250px]"><canvas id="lineTrendChart"></canvas></div></div>
             </div>
             <div class="flex flex-col gap-4">
                 <div class="widget-box flex-grow flex flex-col">
                     <div class="font-medium mb-4 text-muted flex justify-between items-center"><span class="flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4 text-warning"></i> อัปเดตล่าสุด (งานค้างขึ้นก่อน)</span></div>
                     <div class="table-container flex-grow h-[550px]">
-                        <table>
-                            <thead><tr><th>Ticket</th><th>อาคาร</th><th>รายละเอียด</th><th>สถานะ</th><th>SLA</th></tr></thead>
-                            <tbody id="lineLatestTable"></tbody>
-                        </table>
+                        <table><thead><tr><th>Ticket</th><th>อาคาร</th><th>รายละเอียด</th><th>สถานะ</th><th>SLA</th></tr></thead><tbody id="lineLatestTable"></tbody></table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- 3. SMARTCARE DASHBOARD (VIEWER) -->
     <div id="view-smartcare" class="view-section">
         <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
             <div class="section-title text-purple-500 m-0"><i data-lucide="file-spreadsheet"></i> แดชบอร์ดประมวลผล Smartcare <span class="text-sm font-normal text-muted ml-2 filter-label"></span></div>
-            <button class="btn-icon w-auto px-4 text-sm border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white shadow-sm" onclick="document.getElementById('scFileInput').click()"><i data-lucide="upload" class="mr-2 w-4 h-4"></i> อัปโหลดและซิงค์ Excel</button>
-            <input type="file" id="scFileInput" class="hidden" accept=".xlsx, .xls" onchange="window.handleSmartcareUpload(event)">
+            <!-- ปุ่ม Upload สำหรับ Admin (แยกส่วนอัปโหลดชัดเจน) -->
+            <button class="btn-icon w-auto px-5 py-2 text-sm bg-purple-500 text-white hover:bg-purple-600 shadow-lg shadow-purple-500/30 border-0 transition" onclick="document.getElementById('uploadModal').classList.add('show')"><i data-lucide="cloud-upload" class="mr-2 w-4 h-4"></i> ซิงค์ไฟล์ Excel (Admin)</button>
         </div>
 
-        <div id="sc-upload-prompt" class="widget-box border-dashed border-2 border-purple-500 bg-purple-50 dark:bg-purple-500/10 text-center cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-500/20 transition" onclick="document.getElementById('scFileInput').click()">
-            <i data-lucide="file-up" class="mx-auto mb-4 text-purple-500" style="width: 48px; height: 48px;"></i>
-            <h3 class="text-lg font-bold mb-2">อัปโหลดไฟล์ ReportTicket (.xlsx)</h3>
-            <p class="text-muted text-sm mb-2">เพื่อคำนวณและอัปเดตข้อมูลขึ้น Cloud (Google Sheet)</p>
-            <p class="text-muted text-xs opacity-70">ต้องมีชีต <span class="font-bold text-main">Ticket</span> และ <span class="font-bold text-main">Activity</span></p>
+        <div id="sc-upload-prompt" class="widget-box text-center py-12 flex flex-col items-center justify-center border-dashed border-2 border-purple-500 bg-purple-50/50 dark:bg-purple-500/5">
+            <div class="w-20 h-20 rounded-full bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center mb-4"><i data-lucide="cloud-off" class="text-purple-500 w-10 h-10"></i></div>
+            <h3 class="text-xl font-bold mb-2 text-main">ยังไม่มีข้อมูล Smartcare ในระบบ Cloud</h3>
+            <p class="text-muted text-sm mb-6 max-w-md">ระบบตรวจไม่พบข้อมูลใน Google Sheet กรุณาให้ Admin กดปุ่มซิงค์ไฟล์ Excel เพื่อตั้งต้นระบบ</p>
+            <button class="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-medium shadow-lg shadow-purple-500/30 transition flex items-center gap-2 mx-auto transform hover:-translate-y-1" onclick="document.getElementById('uploadModal').classList.add('show')"><i data-lucide="cloud-upload" class="w-5 h-5"></i> อัปโหลดไฟล์เพื่อเริ่มต้นใช้งาน</button>
         </div>
 
         <div id="sc-dash-section" style="display: none; flex-direction: column; gap: 16px;">
             <div class="grid grid-cols-4 gap-4 sc-layout-top">
-                <div class="sc-card sc-card-hover flex justify-between items-start" onclick="window.openUniversalModal('smartcare', 'total')">
-                    <div><div class="text-sm font-medium text-muted mb-1">งานที่เข้าเกณฑ์ SLA</div><div class="sc-kpi-val num text-main text-2xl font-bold" id="sc-ui-total">0</div><div class="text-[10px] text-muted mt-1">Submit -> Accept -> Done</div></div>
-                    <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500"><i data-lucide="clipboard-list"></i></div>
-                </div>
-                <div class="sc-card sc-card-hover flex justify-between items-start" onclick="window.openUniversalModal('smartcare', 'completed')">
-                    <div><div class="text-sm font-medium text-muted mb-1">เสร็จสิ้น (Done)</div><div class="sc-kpi-val num text-emerald-500 text-2xl font-bold" id="sc-ui-done">0</div></div>
-                    <div class="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-500"><i data-lucide="check-circle-2"></i></div>
-                </div>
-                <div class="sc-card sc-card-hover flex justify-between items-start" onclick="window.openUniversalModal('smartcare', 'accept')">
-                    <div><div class="text-sm font-medium text-muted mb-1">กำลังดำเนินการ</div><div class="sc-kpi-val num text-amber-500 text-2xl font-bold" id="sc-ui-accept">0</div><div class="text-[10px] text-muted mt-1">Accept Task</div></div>
-                    <div class="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-500"><i data-lucide="loader"></i></div>
-                </div>
-                <div class="sc-card sc-card-hover flex justify-between items-start" onclick="window.openUniversalModal('smartcare', 'submit')">
-                    <div><div class="text-sm font-medium text-muted mb-1">รอดำเนินการ</div><div class="sc-kpi-val num text-sky-500 text-2xl font-bold" id="sc-ui-submit">0</div><div class="text-[10px] text-muted mt-1">Submit</div></div>
-                    <div class="w-10 h-10 rounded-lg bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center text-sky-500"><i data-lucide="inbox"></i></div>
-                </div>
+                <div class="sc-card sc-card-hover flex justify-between items-start" onclick="window.openUniversalModal('smartcare', 'total')"><div><div class="text-sm font-medium text-muted mb-1">งานรับแจ้งทั้งหมด</div><div class="sc-kpi-val num text-main text-2xl font-bold" id="sc-ui-total">0</div><div class="text-[10px] text-muted mt-1">ตั๋วทั้งหมดในระบบ</div></div><div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500"><i data-lucide="clipboard-list"></i></div></div>
+                <div class="sc-card sc-card-hover flex justify-between items-start" onclick="window.openUniversalModal('smartcare', 'completed')"><div><div class="text-sm font-medium text-muted mb-1">เสร็จสิ้น (Done)</div><div class="sc-kpi-val num text-emerald-500 text-2xl font-bold" id="sc-ui-done">0</div></div><div class="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-500"><i data-lucide="check-circle-2"></i></div></div>
+                <div class="sc-card sc-card-hover flex justify-between items-start" onclick="window.openUniversalModal('smartcare', 'accept')"><div><div class="text-sm font-medium text-muted mb-1">กำลังดำเนินการ</div><div class="sc-kpi-val num text-amber-500 text-2xl font-bold" id="sc-ui-accept">0</div><div class="text-[10px] text-muted mt-1">Accept Task</div></div><div class="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-500"><i data-lucide="loader"></i></div></div>
+                <div class="sc-card sc-card-hover flex justify-between items-start" onclick="window.openUniversalModal('smartcare', 'submit')"><div><div class="text-sm font-medium text-muted mb-1">รอดำเนินการ</div><div class="sc-kpi-val num text-sky-500 text-2xl font-bold" id="sc-ui-submit">0</div><div class="text-[10px] text-muted mt-1">Submit</div></div><div class="w-10 h-10 rounded-lg bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center text-sky-500"><i data-lucide="inbox"></i></div></div>
             </div>
 
             <div class="grid grid-cols-3 gap-4 sc-layout-mid">
-                <div class="sc-card">
-                    <div class="font-bold text-sm mb-1 flex items-center gap-2 text-main"><i data-lucide="pie-chart" class="w-4 h-4 text-indigo-500"></i> ภาพรวม SLA (วันทำงาน)</div>
-                    <div class="text-[10px] text-muted mb-6">คำนวณจากเวลาที่ Accept จนถึง Done</div>
-                    <div class="flex items-center gap-6">
-                        <div class="relative w-28 h-28 shrink-0">
-                            <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
-                                <circle cx="60" cy="60" r="52" fill="none" stroke-width="12" class="stroke-slate-100 dark:stroke-slate-800"></circle>
-                                <circle id="sc-ui-ring" cx="60" cy="60" r="52" fill="none" stroke-width="12" stroke-linecap="round" class="stroke-emerald-500 transition-all duration-1000" stroke-dasharray="326.7" stroke-dashoffset="326.7"></circle>
-                            </svg>
-                            <div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-2xl font-bold num text-main" id="sc-ui-pct">–</span><span class="text-[9px] uppercase tracking-wider text-muted">on-time</span></div>
-                        </div>
-                        <div class="flex-grow space-y-2 text-xs">
-                            <div class="flex justify-between"><span class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500"></div> ตรงเวลา</span><span class="font-bold num" id="sc-ui-met">0</span></div>
-                            <div class="flex justify-between"><span class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-rose-500"></div> เกินเวลา</span><span class="font-bold num" id="sc-ui-breach">0</span></div>
-                            <div class="flex justify-between border-t border-card-border pt-2 text-muted"><span>วัดผลได้ทั้งหมด</span><span class="num" id="sc-ui-measured">0</span></div>
-                        </div>
-                    </div>
-                </div>
-
+                <div class="sc-card"><div class="font-bold text-sm mb-1 flex items-center gap-2 text-main"><i data-lucide="pie-chart" class="w-4 h-4 text-indigo-500"></i> ภาพรวม SLA (วันทำงาน)</div><div class="text-[10px] text-muted mb-6">คำนวณจากเวลาที่ Accept จนถึง Done</div><div class="flex items-center gap-6"><div class="relative w-28 h-28 shrink-0"><svg viewBox="0 0 120 120" class="w-full h-full -rotate-90"><circle cx="60" cy="60" r="52" fill="none" stroke-width="12" class="stroke-slate-100 dark:stroke-slate-800"></circle><circle id="sc-ui-ring" cx="60" cy="60" r="52" fill="none" stroke-width="12" stroke-linecap="round" class="stroke-emerald-500 transition-all duration-1000" stroke-dasharray="326.7" stroke-dashoffset="326.7"></circle></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-2xl font-bold num text-main" id="sc-ui-pct">–</span><span class="text-[9px] uppercase tracking-wider text-muted">on-time</span></div></div><div class="flex-grow space-y-2 text-xs"><div class="flex justify-between"><span class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500"></div> ตรงเวลา</span><span class="font-bold num" id="sc-ui-met">0</span></div><div class="flex justify-between"><span class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-rose-500"></div> เกินเวลา</span><span class="font-bold num" id="sc-ui-breach">0</span></div><div class="flex justify-between border-t border-card-border pt-2 text-muted"><span>วัดผลได้ทั้งหมด</span><span class="num" id="sc-ui-measured">0</span></div></div></div></div>
                 <div class="flex flex-col gap-4">
-                    <div class="sc-card sc-card-hover flex-1 flex flex-col justify-center" onclick="window.openUniversalModal('smartcare', 'sla')">
-                        <div class="flex justify-between items-start">
-                            <div><div class="text-xs font-medium text-muted mb-1">งานที่เกิน SLA ทั้งหมด (ถาวร)</div><div class="text-3xl font-bold num text-rose-500" id="sc-ui-sla-total">0</div><div class="text-[10px] text-muted mt-1"><span id="sc-ui-sla-done" class="num">0</span> ปิดช้า · <span id="sc-ui-sla-pend" class="num">0</span> ค้างเกินเวลา</div></div>
-                            <div class="w-8 h-8 rounded-md bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-500"><i data-lucide="alert-triangle" class="w-4 h-4"></i></div>
-                        </div>
-                    </div>
-                    <div class="sc-card sc-gradient-card flex-1 flex flex-col justify-center shadow-lg shadow-purple-500/30">
-                        <i data-lucide="star" class="absolute -right-4 -bottom-4 w-24 h-24 opacity-20"></i>
-                        <div class="text-xs font-medium mb-1 opacity-90">คะแนนโหวตเฉลี่ย (CSAT)</div>
-                        <div class="flex items-end justify-between relative z-10">
-                            <div class="text-4xl font-bold num leading-none" id="sc-ui-vote-avg">0.0<span class="text-sm font-normal opacity-70"> / 5.0</span></div>
-                            <div class="flex gap-1" id="sc-ui-vote-stars"></div>
-                        </div>
-                        <div class="text-[10px] opacity-70 mt-1 relative z-10">* อ่านคะแนนอิสระจาก Sheet Ticket โดยตรง</div>
-                    </div>
+                    <div class="sc-card sc-card-hover flex-1 flex flex-col justify-center" onclick="window.openUniversalModal('smartcare', 'sla')"><div class="flex justify-between items-start"><div><div class="text-xs font-medium text-muted mb-1">งานที่เกิน SLA ทั้งหมด (ถาวร)</div><div class="text-3xl font-bold num text-rose-500" id="sc-ui-sla-total">0</div><div class="text-[10px] text-muted mt-1"><span id="sc-ui-sla-done" class="num">0</span> ปิดช้า · <span id="sc-ui-sla-pend" class="num">0</span> ค้างเกินเวลา</div></div><div class="w-8 h-8 rounded-md bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-500"><i data-lucide="alert-triangle" class="w-4 h-4"></i></div></div></div>
+                    <div class="sc-card sc-gradient-card flex-1 flex flex-col justify-center shadow-lg shadow-purple-500/30"><i data-lucide="star" class="absolute -right-4 -bottom-4 w-24 h-24 opacity-20"></i><div class="text-xs font-medium mb-1 opacity-90">คะแนนโหวตเฉลี่ย (CSAT)</div><div class="flex items-end justify-between relative z-10"><div class="text-4xl font-bold num leading-none" id="sc-ui-vote-avg">0.0<span class="text-sm font-normal opacity-70"> / 5.0</span></div><div class="flex gap-1" id="sc-ui-vote-stars"></div></div><div class="text-[10px] opacity-70 mt-1 relative z-10">* อ่านคะแนนอิสระจาก Sheet Ticket โดยตรง</div></div>
                 </div>
-
-                <div class="sc-card flex flex-col">
-                    <div class="font-bold text-sm mb-1 flex items-center gap-2 text-main"><i data-lucide="list-check" class="w-4 h-4 text-indigo-500"></i> SLA แยกตามประเภทงาน</div>
-                    <div class="text-[10px] text-muted mb-4">อัตราส่วนงานที่เสร็จตรงเวลา (%)</div>
-                    <div id="sc-ui-cat-list" class="flex-grow space-y-3 overflow-y-auto max-h-[160px] pr-2"></div>
-                </div>
+                <div class="sc-card flex flex-col"><div class="font-bold text-sm mb-1 flex items-center gap-2 text-main"><i data-lucide="list-check" class="w-4 h-4 text-indigo-500"></i> SLA แยกตามประเภทงาน</div><div class="text-[10px] text-muted mb-4">อัตราส่วนงานที่เสร็จตรงเวลา (%)</div><div id="sc-ui-cat-list" class="flex-grow space-y-3 overflow-y-auto max-h-[160px] pr-2"></div></div>
             </div>
 
-            <div>
-                <h3 class="text-sm font-bold text-main mb-3 flex items-center gap-2"><i data-lucide="tags" class="w-4 h-4 text-indigo-500"></i> สรุปงานซ่อมแยกประเภทหลัก</h3>
-                <div class="grid grid-cols-4 gap-4 sc-layout-bot" id="sc-ui-cat-cards"></div>
-            </div>
+            <div><h3 class="text-sm font-bold text-main mb-3 flex items-center gap-2"><i data-lucide="tags" class="w-4 h-4 text-indigo-500"></i> สรุปงานซ่อมแยกประเภทหลัก</h3><div class="grid grid-cols-4 gap-4 sc-layout-bot" id="sc-ui-cat-cards"></div></div>
 
             <div class="grid grid-cols-2 gap-4 sc-layout-bot">
-                <div class="sc-card flex flex-col h-[350px]">
-                    <h3 class="text-sm font-bold text-main mb-4 flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-indigo-500"></i> สถิติการใช้บริการแยกตามฝ่าย (Top 10)</h3>
-                    <div class="relative flex-grow"><canvas id="sc-ui-chart"></canvas></div>
-                </div>
-                <div class="sc-card flex flex-col h-[350px]">
-                    <h3 class="text-sm font-bold text-main mb-4 flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4 text-amber-500"></i> สถานะงานปัจจุบัน (Pending Tasks)</h3>
-                    <div class="table-container flex-grow">
-                        <table>
-                            <thead><tr><th class="py-2">Ticket No.</th><th class="py-2">ประเภทงาน</th><th class="py-2 text-center">SLA สถานะ</th><th class="py-2 text-center">ขั้นตอน</th></tr></thead>
-                            <tbody id="sc-ui-pending-body"></tbody>
-                        </table>
-                    </div>
-                    <div class="text-[10px] text-muted mt-2">* คลิกแถวเพื่อดูรายละเอียดเต็มแบบ (Full Detail)</div>
-                </div>
+                <div class="sc-card flex flex-col h-[350px]"><h3 class="text-sm font-bold text-main mb-4 flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-indigo-500"></i> สถิติการใช้บริการแยกตามฝ่าย (Top 10)</h3><div class="relative flex-grow"><canvas id="sc-ui-chart"></canvas></div></div>
+                <div class="sc-card flex flex-col h-[350px]"><h3 class="text-sm font-bold text-main mb-4 flex items-center gap-2"><i data-lucide="clock" class="w-4 h-4 text-amber-500"></i> สถานะงานปัจจุบัน (Pending Tasks)</h3><div class="table-container flex-grow"><table><thead><tr><th class="py-2">Ticket No.</th><th class="py-2">ประเภทงาน</th><th class="py-2 text-center">SLA สถานะ</th><th class="py-2 text-center">ขั้นตอน</th></tr></thead><tbody id="sc-ui-pending-body"></tbody></table></div><div class="text-[10px] text-muted mt-2">* คลิกแถวเพื่อดูรายละเอียดเต็มแบบ (Full Detail)</div></div>
             </div>
         </div>
     </div>
 
+    <!-- 4. LINE BUILDINGS -->
     <div id="view-buildings-line" class="view-section widget-box">
         <div class="section-title mb-4"><i data-lucide="building-2" class="text-primary"></i> ข้อมูลเจาะลึกรายอาคาร (Line)</div>
         <div class="flex gap-2 flex-wrap mb-6" id="lineBuildingTabs"></div>
-        <div class="table-container" style="max-height: 60vh;">
-            <table>
-                <thead><tr><th>Ticket</th><th>รายละเอียดปัญหา</th><th>วันที่แจ้ง</th><th>สถานะ</th><th>SLA</th></tr></thead>
-                <tbody id="lineBuildingTableBody"></tbody>
-            </table>
-        </div>
+        <div class="table-container" style="max-height: 60vh;"><table><thead><tr><th>Ticket</th><th>รายละเอียดปัญหา</th><th>วันที่แจ้ง</th><th>สถานะ</th><th>SLA</th></tr></thead><tbody id="lineBuildingTableBody"></tbody></table></div>
         <div class="text-xs text-muted mt-3">* คลิกแถวเพื่อดูรายละเอียดแบบเต็ม (Full Detail)</div>
     </div>
 
+    <!-- 5. SMARTCARE CATEGORIES -->
     <div id="view-buildings-sc" class="view-section widget-box">
         <div class="section-title mb-4"><i data-lucide="tags" class="text-purple-500"></i> ข้อมูลเจาะลึกรายหมวดหมู่งาน (Smartcare)</div>
         <div class="flex gap-2 flex-wrap mb-6" id="scBuildingTabs"></div>
-        <div class="table-container" style="max-height: 60vh;">
-            <table>
-                <thead><tr><th>Ticket</th><th>ฝ่ายแจ้ง (Faction)</th><th>รายละเอียด (Description)</th><th>สถานะ</th><th>SLA</th></tr></thead>
-                <tbody id="scBuildingTableBody"></tbody>
-            </table>
-        </div>
+        <div class="table-container" style="max-height: 60vh;"><table><thead><tr><th>Ticket</th><th>ฝ่ายแจ้ง (Faction)</th><th>รายละเอียด (Description)</th><th>สถานะ</th><th>SLA</th></tr></thead><tbody id="scBuildingTableBody"></tbody></table></div>
         <div class="text-xs text-muted mt-3">* คลิกแถวเพื่อดูรายละเอียดแบบเต็ม (Full Detail)</div>
     </div>
 
+    <!-- 6. RECURRING JOBS -->
     <div id="view-recurring" class="view-section">
         <div class="section-title text-teal-500 mb-2"><i data-lucide="repeat"></i> วิเคราะห์งานเกิดซ้ำ (Recurring Jobs) <span class="text-sm font-normal text-muted ml-2 filter-label"></span></div>
         <p class="text-sm text-muted mb-6">กรองฉลาด: แยกตึก, แยกเดือน และจับกลุ่ม Keyword อัตโนมัติ (คลิกที่แถวเพื่อดูรายการ Ticket)</p>
-        
         <div class="grid-2">
-            <div class="widget-box border-t-4 border-primary flex flex-col">
-                <div class="font-bold text-primary mb-4 flex items-center gap-2"><i data-lucide="message-square"></i> ระบบ Line Bot</div>
-                <div class="table-container flex-grow h-[450px]">
-                    <table>
-                        <thead><tr><th>เดือน/ปี</th><th>อาคาร</th><th>ปัญหาที่พบ (กลุ่มคำ)</th><th class="text-center">ซ้ำ (ครั้ง)</th></tr></thead>
-                        <tbody id="recurringLineBody"></tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div class="widget-box border-t-4 border-purple-500 flex flex-col">
-                <div class="font-bold text-purple-500 mb-4 flex items-center gap-2"><i data-lucide="file-spreadsheet"></i> ระบบ Smartcare</div>
-                <div class="table-container flex-grow h-[450px]">
-                    <table>
-                        <thead><tr><th>เดือน/ปี</th><th>หมวดหมู่งาน (Category)</th><th class="text-center">ซ้ำ (ครั้ง)</th></tr></thead>
-                        <tbody id="recurringScBody"></tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="widget-box border-t-4 border-primary flex flex-col"><div class="font-bold text-primary mb-4 flex items-center gap-2"><i data-lucide="message-square"></i> ระบบ Line Bot</div><div class="table-container flex-grow h-[450px]"><table><thead><tr><th>เดือน/ปี</th><th>อาคาร</th><th>ปัญหาที่พบ (กลุ่มคำ)</th><th class="text-center">ซ้ำ (ครั้ง)</th></tr></thead><tbody id="recurringLineBody"></tbody></table></div></div>
+            <div class="widget-box border-t-4 border-purple-500 flex flex-col"><div class="font-bold text-purple-500 mb-4 flex items-center gap-2"><i data-lucide="file-spreadsheet"></i> ระบบ Smartcare</div><div class="table-container flex-grow h-[450px]"><table><thead><tr><th>เดือน/ปี</th><th>หมวดหมู่งาน (Category)</th><th class="text-center">ซ้ำ (ครั้ง)</th></tr></thead><tbody id="recurringScBody"></tbody></table></div></div>
         </div>
     </div>
 
+    <!-- 7. SETTINGS -->
     <div id="view-settings" class="view-section widget-box max-w-4xl mx-auto w-full mt-8">
         <div class="section-title justify-center text-xl mb-8 border-b border-card-border pb-4"><i data-lucide="settings" class="text-primary"></i> ระบบตั้งค่าเป้าหมาย SLA (แยก 2 ระบบ)</div>
-        
         <div class="grid-2 gap-8">
             <div>
                 <h3 class="font-bold text-primary mb-4 flex items-center gap-2"><i data-lucide="message-square" class="w-5 h-5"></i> Line Bot (เป้าหมายแยกตามตึก)</h3>
-                <div class="border border-card-border rounded-lg bg-base overflow-hidden">
-                    <div class="grid grid-cols-2 gap-4 p-3 border-b border-card-border bg-card-bg text-sm font-semibold text-muted">
-                        <div>ชื่ออาคาร</div><div class="text-right pr-6">เป้าหมาย (วัน)</div>
-                    </div>
-                    <div id="setting-line-sla-list" class="max-h-[400px] overflow-y-auto p-2 space-y-2"></div>
-                </div>
+                <div class="border border-card-border rounded-lg bg-base overflow-hidden"><div class="grid grid-cols-2 gap-4 p-3 border-b border-card-border bg-card-bg text-sm font-semibold text-muted"><div>ชื่ออาคาร</div><div class="text-right pr-6">เป้าหมาย (วัน)</div></div><div id="setting-line-sla-list" class="max-h-[400px] overflow-y-auto p-2 space-y-2"></div></div>
             </div>
-
             <div>
                 <h3 class="font-bold text-purple-500 mb-4 flex items-center gap-2"><i data-lucide="file-spreadsheet" class="w-5 h-5"></i> Smartcare (เป้าหมายแยกตามหมวดหมู่)</h3>
-                <div class="border border-card-border rounded-lg bg-base overflow-hidden">
-                    <div class="grid grid-cols-2 gap-4 p-3 border-b border-card-border bg-card-bg text-sm font-semibold text-muted">
-                        <div>หมวดหมู่งาน</div><div class="text-right pr-6">เป้าหมาย (วันทำการ)</div>
-                    </div>
-                    <div id="setting-sc-sla-list" class="max-h-[400px] overflow-y-auto p-2 space-y-2">
-                        <div class="text-center py-6 text-muted text-sm">ยังไม่มีหมวดหมู่ (รอซิงค์ข้อมูล Cloud)</div>
-                    </div>
-                </div>
+                <div class="border border-card-border rounded-lg bg-base overflow-hidden"><div class="grid grid-cols-2 gap-4 p-3 border-b border-card-border bg-card-bg text-sm font-semibold text-muted"><div>หมวดหมู่งาน</div><div class="text-right pr-6">เป้าหมาย (วันทำการ)</div></div><div id="setting-sc-sla-list" class="max-h-[400px] overflow-y-auto p-2 space-y-2"><div class="text-center py-6 text-muted text-sm">ยังไม่มีหมวดหมู่ (รอซิงค์ข้อมูล Cloud)</div></div></div>
             </div>
         </div>
         <button class="mt-8 w-full py-3 bg-primary text-white rounded-lg font-bold text-lg hover:bg-blue-600 shadow-lg shadow-blue-500/30 transition transform hover:-translate-y-1" onclick="window.saveSlaSettings()">บันทึกการตั้งค่า</button>
 
         <div class="section-title justify-center text-xl mb-6 mt-16 border-b border-card-border pb-4"><i data-lucide="download" class="text-teal-500"></i> ส่งออกข้อมูลงานล่าช้า (Export Over SLA)</div>
         <div class="grid-2 gap-8">
-            <div class="border border-[var(--card-border)] rounded-lg bg-[var(--card-bg)] p-6 text-center flex flex-col items-center justify-center transition hover:border-primary shadow-sm hover:shadow-md">
-                <i data-lucide="message-square" class="w-10 h-10 text-primary mb-3"></i>
-                <h3 class="font-bold text-lg mb-1 text-main">Line Bot (เกิน SLA)</h3>
-                <p class="text-sm text-muted mb-6">ส่งออกรายงานงานซ่อมจาก Line ที่ใช้เวลาแก้ไขเกินเป้าหมาย</p>
-                <div class="flex gap-4">
-                    <button onclick="window.exportOverSLA('line', 'excel')" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg flex items-center gap-2 font-medium transition shadow-md shadow-emerald-500/20"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Excel</button>
-                    <button onclick="window.exportOverSLA('line', 'pdf')" class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg flex items-center gap-2 font-medium transition shadow-md shadow-rose-500/20"><i data-lucide="file-text" class="w-4 h-4"></i> PDF</button>
-                </div>
-            </div>
-            <div class="border border-[var(--card-border)] rounded-lg bg-[var(--card-bg)] p-6 text-center flex flex-col items-center justify-center transition hover:border-purple-500 shadow-sm hover:shadow-md">
-                <i data-lucide="file-spreadsheet" class="w-10 h-10 text-purple-500 mb-3"></i>
-                <h3 class="font-bold text-lg mb-1 text-purple-500">Smartcare (เกิน SLA)</h3>
-                <p class="text-sm text-muted mb-6">ส่งออกรายงานงานซ่อมจากระบบ Excel ที่ใช้เวลาดำเนินการเกินเป้าหมาย</p>
-                <div class="flex gap-4">
-                    <button onclick="window.exportOverSLA('sc', 'excel')" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg flex items-center gap-2 font-medium transition shadow-md shadow-emerald-500/20"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Excel</button>
-                    <button onclick="window.exportOverSLA('sc', 'pdf')" class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg flex items-center gap-2 font-medium transition shadow-md shadow-rose-500/20"><i data-lucide="file-text" class="w-4 h-4"></i> PDF</button>
-                </div>
-            </div>
+            <div class="border border-[var(--card-border)] rounded-lg bg-[var(--card-bg)] p-6 text-center flex flex-col items-center justify-center transition hover:border-primary shadow-sm hover:shadow-md"><i data-lucide="message-square" class="w-10 h-10 text-primary mb-3"></i><h3 class="font-bold text-lg mb-1 text-main">Line Bot (เกิน SLA)</h3><p class="text-sm text-muted mb-6">ส่งออกรายงานงานซ่อมจาก Line ที่ใช้เวลาแก้ไขเกินเป้าหมาย</p><div class="flex gap-4"><button onclick="window.exportOverSLA('line', 'excel')" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg flex items-center gap-2 font-medium transition shadow-md shadow-emerald-500/20"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Excel</button><button onclick="window.exportOverSLA('line', 'pdf')" class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg flex items-center gap-2 font-medium transition shadow-md shadow-rose-500/20"><i data-lucide="file-text" class="w-4 h-4"></i> PDF</button></div></div>
+            <div class="border border-[var(--card-border)] rounded-lg bg-[var(--card-bg)] p-6 text-center flex flex-col items-center justify-center transition hover:border-purple-500 shadow-sm hover:shadow-md"><i data-lucide="file-spreadsheet" class="w-10 h-10 text-purple-500 mb-3"></i><h3 class="font-bold text-lg mb-1 text-purple-500">Smartcare (เกิน SLA)</h3><p class="text-sm text-muted mb-6">ส่งออกรายงานงานซ่อมจากระบบ Excel ที่ใช้เวลาดำเนินการเกินเป้าหมาย</p><div class="flex gap-4"><button onclick="window.exportOverSLA('sc', 'excel')" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg flex items-center gap-2 font-medium transition shadow-md shadow-emerald-500/20"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Excel</button><button onclick="window.exportOverSLA('sc', 'pdf')" class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg flex items-center gap-2 font-medium transition shadow-md shadow-rose-500/20"><i data-lucide="file-text" class="w-4 h-4"></i> PDF</button></div></div>
         </div>
     </div>
-
   </div>
 </div>
 
-<div class="modal-overlay" id="universalModal" onclick="if(event.target===this) window.closeUniversalModal()">
-    <div class="modal-content">
-        <div class="modal-header">
-            <div class="flex flex-col"><div class="font-bold text-lg flex items-center gap-2 text-main" id="um-title"><i data-lucide="list"></i> รายละเอียด</div><div class="text-sm text-muted font-medium" id="um-subtitle">กำลังโหลด...</div></div>
-            <button class="btn-close" onclick="window.closeUniversalModal()"><i data-lucide="x"></i></button>
+<!-- ================= MODALS ================= -->
+
+<!-- ☁️ Modal สำหรับอัปโหลด Excel ใหม่ (Admin Sync Engine) -->
+<div class="modal-overlay" id="uploadModal" onclick="if(event.target===this) window.closeUploadModal()">
+    <div class="modal-content !max-w-md p-6">
+        <div class="flex justify-between items-center mb-6 border-b border-card-border pb-4">
+            <h3 class="text-lg font-bold flex items-center gap-2 text-main"><i data-lucide="cloud-upload" class="text-purple-500"></i> ซิงค์ฐานข้อมูล Excel</h3>
+            <button class="btn-close" onclick="window.closeUploadModal()"><i data-lucide="x"></i></button>
         </div>
-        <div class="p-4 overflow-y-auto flex-grow bg-base">
-            <div class="table-container max-h-[500px] shadow-sm bg-card-bg">
-                <table id="um-table"><thead id="um-thead"></thead><tbody id="um-tbody"></tbody></table>
+        
+        <div id="upload-step-1" class="border-2 border-dashed border-purple-500/50 rounded-xl p-8 text-center hover:bg-purple-50 dark:hover:bg-purple-500/10 cursor-pointer transition group" onclick="document.getElementById('realFileInput').click()">
+            <div class="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-500/20 mx-auto flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i data-lucide="file-spreadsheet" class="w-8 h-8 text-purple-500"></i></div>
+            <div class="font-bold text-main mb-2">คลิกเพื่อเลือกไฟล์ ReportTicket (.xlsx)</div>
+            <div class="text-xs text-muted">ระบบจะคำนวณและอัปโหลดข้อมูลที่ถูกต้องขึ้น Cloud ให้ 100%</div>
+        </div>
+        <input type="file" id="realFileInput" class="hidden" accept=".xlsx, .xls" onchange="window.startUploadFlow(event)">
+
+        <!-- Progress Bar แบบ 0-100% สมจริง -->
+        <div id="upload-step-2" class="hidden flex-col items-center py-6">
+            <i data-lucide="loader-2" class="w-10 h-10 text-purple-500 animate-spin mb-6"></i>
+            <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 mb-3 overflow-hidden shadow-inner">
+                <div id="upload-progress-bar" class="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300 rounded-full" style="width: 0%"></div>
             </div>
+            <div id="upload-status-text" class="text-sm font-medium text-purple-500 animate-pulse">กำลังเตรียมการ...</div>
         </div>
     </div>
 </div>
 
-<div class="modal-overlay" id="ticketModal" onclick="if(event.target===this) window.closeTicketModal()">
-    <div class="modal-content ticket-modal-content">
-        <div class="modal-header">
-            <div class="flex flex-col"><div class="text-xs text-muted mb-1" id="tm-system-label">รายละเอียดงานซ่อมแบบเจาะลึก</div><div class="font-bold text-xl text-indigo-600 num" id="tm-no">Ticket No</div></div>
-            <button class="btn-close" onclick="window.closeTicketModal()"><i data-lucide="x"></i></button>
-        </div>
-        <div class="p-6 overflow-y-auto" id="tm-body"></div>
-    </div>
-</div>
-
+<div class="modal-overlay" id="universalModal" onclick="if(event.target===this) window.closeUniversalModal()"><div class="modal-content"><div class="modal-header"><div class="flex flex-col"><div class="font-bold text-lg flex items-center gap-2 text-main" id="um-title"><i data-lucide="list"></i> รายละเอียด</div><div class="text-sm text-muted font-medium" id="um-subtitle">กำลังโหลด...</div></div><button class="btn-close" onclick="window.closeUniversalModal()"><i data-lucide="x"></i></button></div><div class="p-4 overflow-y-auto flex-grow bg-base"><div class="table-container max-h-[500px] shadow-sm bg-card-bg"><table id="um-table"><thead id="um-thead"></thead><tbody id="um-tbody"></tbody></table></div></div></div></div>
+<div class="modal-overlay" id="ticketModal" onclick="if(event.target===this) window.closeTicketModal()"><div class="modal-content ticket-modal-content"><div class="modal-header"><div class="flex flex-col"><div class="text-xs text-muted mb-1" id="tm-system-label">รายละเอียดงานซ่อมแบบเจาะลึก</div><div class="font-bold text-xl text-indigo-600 num" id="tm-no">Ticket No</div></div><button class="btn-close" onclick="window.closeTicketModal()"><i data-lucide="x"></i></button></div><div class="p-6 overflow-y-auto" id="tm-body"></div></div></div>
 <div id="toast"><i data-lucide="check-circle" id="toastIcon"></i> <span id="toastText">สำเร็จ</span></div>
 
+<!-- ================= JAVASCRIPT ================= -->
 <script>
 // ================= API ENDPOINTS =================
+// ⚠️ สำคัญ: วาง URL API ของคุณตรงนี้ เพื่อให้ระบบดึงและส่งข้อมูลได้
 const LINE_API_URL = "https://script.google.com/macros/s/AKfycbygiyeaAfjPr3dfl8JyFd_d-VeyuTfvlHl_PcJk4j-dZZY2lvCIOTC1SrZJ4yMvXau2GA/exec";
 const SC_API_URL = "https://script.google.com/macros/s/AKfycbygiyeaAfjPr3dfl8JyFd_d-VeyuTfvlHl_PcJk4j-dZZY2lvCIOTC1SrZJ4yMvXau2GA/exec"; 
 
@@ -512,7 +395,7 @@ const THAI_HOLIDAYS = [ "2024-01-01", "2024-04-15", "2024-05-01", "2024-12-05", 
 
 let lineDataRaw = [], scDataRaw = [];
 let lineFiltered = [], scFiltered = [];
-let scGlobalVoteAvg = 0;
+let scGlobalVoteAvg = {}; // เปลี่ยนเป็น Object เพื่อเก็บคะแนนแยกรายเดือน
 
 let currentYear = 'all', currentMonth = 'all';
 let activeLineTab = 'ari', activeScTab = '';
@@ -580,66 +463,100 @@ window.switchView = (targetId) => {
     if(targetId === 'view-recurring') window.renderRecurringView();
 };
 
-// --- API Loaders ---
-// เพิ่ม ?sys=line&nocache=... เพื่อป้องกันการจำค่าเก่าของเบราว์เซอร์ 100%
+// --- THE VIEWER: API Loaders (ดึงข้อมูลแสดงผลเท่านั้น) ---
 async function fetchLineData() {
     try {
         const url = `${LINE_API_URL}?sys=line&nocache=${Date.now()}`;
         const res = await fetch(url);
         if(!res.ok) throw new Error("API Err");
-        const data = await res.json();
-        if(Array.isArray(data)) {
-            lineDataRaw = data.map(row => {
-                let rawB = (row.Building || '').toLowerCase();
-                let bCode = 'ari';
-                for(let key in BUILDINGS) if(BUILDINGS[key].keys.some(k => rawB.includes(k))) { bCode = key; break; }
-                
-                let start = parseDateRobust(row.Date);
-                let end = row.CloseTime ? parseDateRobust(row.CloseTime) : null;
-                let status = (row.Status && row.Status.toLowerCase().includes('complete')) ? 'completed' : 'pending';
-                
-                let durDays = start ? (((end || new Date()) - start) / (1000 * 60 * 60 * 24)) : 0;
-                let targetSla = lineSlaConfig[bCode] || DEFAULT_LINE_SLA;
-                let isOver = durDays > targetSla; 
+        const text = await res.text();
+        try {
+            const data = JSON.parse(text);
+            if(Array.isArray(data)) {
+                lineDataRaw = data.map(row => {
+                    let rawB = (row.Building || '').toLowerCase();
+                    let bCode = 'ari';
+                    for(let key in BUILDINGS) if(BUILDINGS[key].keys.some(k => rawB.includes(k))) { bCode = key; break; }
+                    
+                    let start = parseDateRobust(row.Date);
+                    let end = row.CloseTime ? parseDateRobust(row.CloseTime) : null;
+                    let status = (row.Status && row.Status.toLowerCase().includes('complete')) ? 'completed' : 'pending';
+                    
+                    let durDays = start ? (((end || new Date()) - start) / (1000 * 60 * 60 * 24)) : 0;
+                    let targetSla = lineSlaConfig[bCode] || DEFAULT_LINE_SLA;
+                    let isOver = durDays > targetSla; 
 
-                return { source: 'line', ticket: String(row.Ticket || '-').trim(), buildingCode: bCode, detail: String(row.Detail || '-').trim(), start: start, lastUpdate: end || start || new Date(0), durDays: durDays, targetSla: targetSla, status: status, isOverSLA: isOver, dateStr: formatDateStr(start) };
-            }).sort((a,b) => b.lastUpdate - a.lastUpdate);
-        }
-    } catch (e) { console.error(e); window.showToast("ดึงข้อมูล Line ไม่สำเร็จ", true); }
+                    return { source: 'line', ticket: String(row.Ticket || '-').trim(), buildingCode: bCode, detail: String(row.Detail || '-').trim(), start: start, lastUpdate: end || start || new Date(0), durDays: durDays, targetSla: targetSla, status: status, isOverSLA: isOver, dateStr: formatDateStr(start) };
+                }).sort((a,b) => b.lastUpdate - a.lastUpdate);
+            }
+        } catch(e) { console.error("Line Parse Error"); }
+    } catch (e) { console.error(e); }
 }
 
-// เพิ่ม ?sys=sc&nocache=... เพื่อป้องกันการจำค่าเก่าของเบราว์เซอร์ 100%
 async function fetchSmartcareData() {
     if(!SC_API_URL) return;
     try {
         const url = `${SC_API_URL}?sys=sc&nocache=${Date.now()}`;
         const res = await fetch(url);
-        const data = await res.json();
-        
-        if(data && data.tickets && Array.isArray(data.tickets)) {
-            scGlobalVoteAvg = data.globalVoteAvg || 0;
-            scDataRaw = data.tickets.map(d => {
-                d.start = parseDateRobust(d.start);
-                d.targetSla = scSlaConfig[d.category] || DEFAULT_SC_SLA;
-                if(d.slaDays !== null && d.slaDays !== '') {
-                    d.isOverSLA = parseFloat(d.slaDays) > d.targetSla;
+        if(!res.ok) throw new Error("API Err");
+        const text = await res.text();
+        try {
+            const data = JSON.parse(text);
+            if(data && data.tickets && Array.isArray(data.tickets) && data.tickets.length > 0) {
+                // แปลงข้อมูล Vote Score แบบแยกเดือน (JSON String จาก Apps Script)
+                try {
+                    scGlobalVoteAvg = JSON.parse(data.globalVoteAvg || "{}");
+                } catch(e) {
+                    scGlobalVoteAvg = { all: parseFloat(data.globalVoteAvg) || 0 };
                 }
-                return d;
-            });
-            
-            document.getElementById('sc-upload-prompt').style.display = 'none'; 
-            document.getElementById('sc-dash-section').style.display = 'flex';
-            document.getElementById('u-smartcare-empty').style.display = 'none'; 
-            document.getElementById('u-smartcare-data').style.display = 'flex';
-        }
+
+                scDataRaw = data.tickets.map(d => {
+                    d.start = parseDateRobust(d.start);
+                    d.targetSla = scSlaConfig[d.category] || DEFAULT_SC_SLA;
+                    if(d.slaDays !== null && d.slaDays !== '') {
+                        d.isOverSLA = parseFloat(d.slaDays) > d.targetSla;
+                    }
+                    return d;
+                });
+                
+                document.getElementById('sc-upload-prompt').style.display = 'none'; 
+                document.getElementById('sc-dash-section').style.display = 'flex';
+                document.getElementById('u-smartcare-empty').style.display = 'none'; 
+                document.getElementById('u-smartcare-data').style.display = 'flex';
+            } else {
+                // กรณีไม่มีข้อมูลให้โชว์หน้าอัปโหลด
+                document.getElementById('sc-upload-prompt').style.display = 'flex'; 
+                document.getElementById('sc-dash-section').style.display = 'none';
+                document.getElementById('u-smartcare-empty').style.display = 'block'; 
+                document.getElementById('u-smartcare-data').style.display = 'none';
+            }
+        } catch(e) { console.error("Smartcare Parse Error"); }
     } catch(e) { console.error("Fetch SC Error:", e); }
 }
 
-// --- Excel Process & Cloud Sync ---
-window.handleSmartcareUpload = async (e) => {
+// --- THE ADMIN SYNC ENGINE (จัดการประมวลผล Excel แยกส่วน) ---
+window.closeUploadModal = () => {
+    if(document.getElementById('upload-step-2').classList.contains('hidden')) {
+        document.getElementById('uploadModal').classList.remove('show');
+    }
+};
+
+window.startUploadFlow = async (e) => {
     const file = e.target.files[0]; if(!file) return;
-    window.showToast("กำลังอ่านไฟล์ Excel...", false);
+    
+    document.getElementById('upload-step-1').classList.add('hidden');
+    document.getElementById('upload-step-2').classList.remove('hidden');
+    document.getElementById('upload-step-2').classList.add('flex');
+    
+    const updateProg = async (pct, txt) => {
+        document.getElementById('upload-progress-bar').style.width = pct + '%';
+        document.getElementById('upload-status-text').innerText = txt;
+        await yieldToMain();
+        await new Promise(r => setTimeout(r, 600)); // หน่วงเวลาให้แถบวิ่งดูสมูท
+    };
+
     try {
+        await updateProg(15, "กำลังอ่านไฟล์ Excel...");
         const data = await file.arrayBuffer();
         const wb = XLSX.read(data, {type: 'array'});
         const tSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('ticket'));
@@ -649,9 +566,71 @@ window.handleSmartcareUpload = async (e) => {
         const tickets = XLSX.utils.sheet_to_json(wb.Sheets[tSheetName]);
         const activities = XLSX.utils.sheet_to_json(wb.Sheets[aSheetName]);
         
-        e.target.value = ''; 
-        await processSmartcareStrict(tickets, activities);
-    } catch(err) { window.showToast(err.message, true); }
+        await updateProg(45, "กำลังวิเคราะห์ (Strict Engine) และคัดกรองข้อมูล...");
+        const payload = await processSmartcareLogic(tickets, activities);
+        
+        // 🚀 แสดงผลขึ้นหน้าแดชบอร์ดท้องถิ่นทันที! (แก้ปัญหาข้อมูลเด้งหาย)
+        // ✅ แปลงวันที่จาก String ให้กลับมาเป็น Date Object ก่อนเพื่อป้องกัน Error getFullYear
+        scDataRaw = payload.tickets.map(d => ({ ...d, start: d.start ? new Date(d.start) : null }));
+        scGlobalVoteAvg = payload.globalVoteAvg;
+
+        document.getElementById('sc-upload-prompt').style.display = 'none'; 
+        document.getElementById('sc-dash-section').style.display = 'flex';
+        document.getElementById('u-smartcare-empty').style.display = 'none'; 
+        document.getElementById('u-smartcare-data').style.display = 'flex';
+        
+        updateYearFilterOptions(); 
+        window.applyGlobalFilter();
+        
+        await updateProg(100, "ประมวลผลเสร็จสิ้น กำลังบันทึก...");
+        
+        document.getElementById('upload-progress-bar').classList.remove('from-purple-500', 'to-indigo-500');
+        document.getElementById('upload-progress-bar').classList.add('bg-success');
+        
+        // จุดพลุฉลองความสำเร็จ!
+        fireConfetti();
+        window.showToast(`สำเร็จ! ได้ข้อมูล ${payload.tickets.length} ใบ (ตัดออก ${payload.droppedCount} ใบที่ผิดเงื่อนไข)`);
+        
+        // ส่งข้อมูลขึ้น Cloud แอบๆ ไว้เบื้องหลัง (Background Sync) ทนทานต่อ Error
+        if (SC_API_URL) {
+            fetch(SC_API_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', // บังคับทะลุผ่านกฏข้ามโดเมน เพื่อส่งข้อมูลให้ GAS อย่างเดียว
+                body: JSON.stringify({ 
+                    globalVoteAvg: JSON.stringify(payload.globalVoteAvg), 
+                    tickets: payload.tickets 
+                }), 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
+            }).catch(err => console.error("Cloud Sync Error (Background)", err));
+        }
+
+        setTimeout(() => {
+            document.getElementById('uploadModal').classList.remove('show');
+            document.getElementById('upload-step-1').classList.remove('hidden');
+            document.getElementById('upload-step-2').classList.add('hidden');
+            document.getElementById('upload-step-2').classList.remove('flex');
+            document.getElementById('upload-progress-bar').style.width = '0%';
+            document.getElementById('upload-progress-bar').classList.add('from-purple-500', 'to-indigo-500');
+            document.getElementById('upload-progress-bar').classList.remove('bg-success');
+            e.target.value = '';
+        }, 3000);
+
+    } catch(err) {
+        await updateProg(0, "เกิดข้อผิดพลาด: " + err.message);
+        document.getElementById('upload-progress-bar').classList.remove('from-purple-500', 'to-indigo-500');
+        document.getElementById('upload-progress-bar').classList.add('bg-danger');
+        document.getElementById('upload-status-text').classList.add('text-danger');
+        
+        setTimeout(() => {
+            document.getElementById('upload-step-1').classList.remove('hidden');
+            document.getElementById('upload-step-2').classList.add('hidden');
+            document.getElementById('upload-step-2').classList.remove('flex');
+            document.getElementById('upload-progress-bar').classList.add('from-purple-500', 'to-indigo-500');
+            document.getElementById('upload-progress-bar').classList.remove('bg-danger');
+            document.getElementById('upload-status-text').classList.remove('text-danger');
+            e.target.value = '';
+        }, 4000);
+    }
 };
 
 function calculateWorkingDays(startD, endD) {
@@ -666,28 +645,46 @@ function calculateWorkingDays(startD, endD) {
     return Math.max(days - 1, 0) + ((endD-startD)/(1000*60*60*24) % 1);
 }
 
-async function processSmartcareStrict(tickets, activities) {
-    // 1. Vote Score อิสระ
-    let vTotal = 0, vCount = 0;
-    const voteMap = new Map();
+// ลอจิกประมวลผลข้อมูลใหม่ (ทำงานแค่ตอนอัปโหลด)
+async function processSmartcareLogic(tickets, activities) {
+    // 1. ดึงคะแนน Vote Score ออกมาคำนวณแยก "รายเดือน" (อิสระ ไม่อิง SLA)
+    let voteStats = { all: { total: 0, count: 0 } };
+    
     tickets.forEach(row => {
         let statusStr = String(row['Status'] || row['สถานะ'] || '').toLowerCase();
-        let tNo = String(row['TicketNo']||'').trim();
+        if (statusStr.includes('cancel')) return; // เตะตั๋วที่ยกเลิกทิ้ง
         
-        let vScore = '-';
+        let vScore = 0;
         for (let key in row) {
             let cleanKey = key.replace(/\s+/g, '').toLowerCase();
-            if (cleanKey.includes('votescore') || cleanKey.includes('คะแนน')) { vScore = row[key]; break; }
+            if (cleanKey.includes('votescore') || cleanKey.includes('คะแนน')) { 
+                vScore = parseFloat(row[key]); 
+                break; 
+            }
         }
-        if (tNo) voteMap.set(tNo, vScore);
-
-        if (statusStr.includes('cancel')) return; 
-        let vFloat = parseFloat(vScore);
-        if (!isNaN(vFloat) && vFloat > 0) { vTotal += vFloat; vCount++; }
+        
+        if (!isNaN(vScore) && vScore > 0) {
+            voteStats.all.total += vScore;
+            voteStats.all.count++;
+            
+            let cDate = parseDateRobust(row['CreateDate'] || row['วันที่'] || row['Date']);
+            if (cDate) {
+                let y = cDate.getFullYear();
+                let m = cDate.getMonth(); // 0-11
+                let key = `${y}-${m}`;
+                if (!voteStats[key]) voteStats[key] = { total: 0, count: 0 };
+                voteStats[key].total += vScore;
+                voteStats[key].count++;
+            }
+        }
     });
-    scGlobalVoteAvg = vCount > 0 ? parseFloat((vTotal / vCount).toFixed(1)) : 0;
 
-    // 2. Map Activities 
+    let voteAverages = {};
+    for (let key in voteStats) {
+        voteAverages[key] = voteStats[key].count > 0 ? parseFloat((voteStats[key].total / voteStats[key].count).toFixed(1)) : 0;
+    }
+
+    // 2. Map Activities
     const actMap = new Map();
     activities.forEach(row => {
         let tNo = String(row['TicketNo'] || '').trim(); if(!tNo) return;
@@ -696,94 +693,87 @@ async function processSmartcareStrict(tickets, activities) {
         actMap.get(tNo).push({ action: actLower, date: parseDateRobust(row['ActionDate'] || row['Date'] || row['CreateDate'] || row['Datetime'] || row['Timestamp']) });
     });
 
-    let scParsed = []; let dropped = 0;
+    let payloadTickets = [];
+    let droppedCount = 0;
 
     for (let i=0; i < tickets.length; i++) {
         let tRow = tickets[i]; let tNo = String(tRow['TicketNo']||'').trim(); if(!tNo) continue;
-        let finalVoteScore = voteMap.get(tNo) || '-';
         
         let descVal = '-';
         for(let k in tRow) { let c=String(k).replace(/\s/g,'').toLowerCase(); if(c.includes('desc')||c.includes('detail')||c.includes('ราย')) {descVal=String(tRow[k]); break;} }
 
+        // 3. Strict Sequence Logic (กฎเหล็ก A)
         let acts = actMap.get(tNo) || []; acts.sort((a,b) => (a.date||0) - (b.date||0));
         let seq = []; let isInvalid = false; let tSubmit = parseDateRobust(tRow['CreateDate']), tAccept = null, tDone = null;
 
         for (let act of acts) {
             let a = act.action;
-            if(a.includes('cancel')) { isInvalid = true; break; } 
-            
             let step = 0;
-            if(a.includes('submit')) step = 1; else if(a.includes('accept')) step = 2; else if(a.includes('done') || a.includes('close')) step = 3;
-            else { isInvalid = true; break; } 
+            if(a === 'submit' || a.includes('submit')) step = 1; 
+            else if(a === 'accept task' || a.includes('accept')) step = 2; 
+            else if(a === 'done' || a.includes('done')) step = 3;
+            else { isInvalid = true; break; } // คำอื่นเตะทิ้งทั้งหมด
 
             if(seq.length === 0) { 
                 if(step !== 1) { isInvalid = true; break; } 
                 seq.push(step); tSubmit = act.date || tSubmit; 
             } else {
                 let last = seq[seq.length-1];
-                if(step === last) continue; 
-                if(step === last + 1) { seq.push(step); if(step === 2) tAccept = act.date; if(step === 3) tDone = act.date; } 
-                else { isInvalid = true; break; } 
+                if(step === last) continue; // บีบอัดสถานะที่ซ้ำกัน
+                if(step === last + 1) { 
+                    seq.push(step); 
+                    if(step === 2) tAccept = act.date; 
+                    if(step === 3) tDone = act.date; 
+                } 
+                else { isInvalid = true; break; } // ข้ามคิว (เช่น Submit แล้วข้ามไป Done)
             }
         }
         
-        if(isInvalid || seq.length === 0) { dropped++; continue; }
+        if(isInvalid || seq.length === 0) { droppedCount++; continue; }
 
         let finalStatus = seq[seq.length-1] === 3 ? 'Done' : (seq[seq.length-1] === 2 ? 'Accept Task' : 'Submit');
         let rawCat = String(tRow['Category']||''); let cat = rawCat.includes('-') ? rawCat.split('-').slice(1).join('-').trim() : rawCat; cat = cat || 'อื่นๆ';
         let bldg = tRow['Building'] || tRow['อาคาร'] || tRow['Faction'] || 'ไม่ระบุ';
 
-        let targetDays = scSlaConfig[cat] || DEFAULT_SC_SLA;
-        let slaDays = null, isSlaMet = null;
-        
+        let targetDays = scSlaConfig[cat] || DEFAULT_SC_SLA; let slaDays = null, isSlaMet = null;
         if(finalStatus === 'Done' && tAccept && tDone) {
             slaDays = calculateWorkingDays(tAccept, tDone); isSlaMet = slaDays <= targetDays;
         } else if (finalStatus === 'Accept Task' && tAccept) {
             let currentDays = calculateWorkingDays(tAccept, new Date()); isSlaMet = currentDays <= targetDays; slaDays = currentDays;
         }
 
-        scParsed.push({ source: 'smartcare', ticket: tNo, category: cat, detail: descVal, faction: bldg, start: tSubmit, status: finalStatus, slaDays: slaDays, targetSla: targetDays, isOverSLA: isSlaMet === false, dateStr: formatDateStr(tSubmit), voteScore: finalVoteScore });
-        if(i % 1000 === 0 && i !== 0) await yieldToMain();
+        payloadTickets.push({
+            source: 'smartcare', ticket: tNo, category: cat, detail: descVal, faction: bldg,
+            start: tSubmit ? tSubmit.toISOString() : null, status: finalStatus, slaDays: slaDays, targetSla: targetDays, isOverSLA: isSlaMet === false, dateStr: formatDateStr(tSubmit)
+        });
+        
+        if(i % 500 === 0) await new Promise(r => setTimeout(r, 0));
     }
-
-    scDataRaw = scParsed.sort((a,b) => (b.start||0) - (a.start||0));
-    window.showToast(`ประมวลผลสำเร็จ! ตัดออก ${dropped} ใบ`);
     
-    document.getElementById('sc-upload-prompt').style.display = 'none'; document.getElementById('sc-dash-section').style.display = 'flex';
-    document.getElementById('u-smartcare-empty').style.display = 'none'; document.getElementById('u-smartcare-data').style.display = 'flex';
-    updateYearFilterOptions(); window.applyGlobalFilter();
-    
-    // โยนขึ้น Cloud ทันที!
-    const payloadTickets = scDataRaw.map(d => ({
-        source: d.source, ticket: d.ticket, category: d.category, detail: d.detail, faction: d.faction,
-        start: d.start ? d.start.toISOString() : null, status: d.status, slaDays: d.slaDays, targetSla: d.targetSla, isOverSLA: d.isOverSLA, dateStr: d.dateStr, voteScore: d.voteScore
-    }));
-    await uploadSmartcareToCloud({ globalVoteAvg: scGlobalVoteAvg, tickets: payloadTickets });
+    return { globalVoteAvg: voteAverages, tickets: payloadTickets, droppedCount: droppedCount };
 }
 
-async function uploadSmartcareToCloud(payload) {
-    if (!SC_API_URL) {
-        setTimeout(() => window.showToast("แสดงผลเฉพาะในเครื่อง (โปรดใส่ URL Google Sheet ในโค้ดเพื่อใช้งาน Cloud Sync)", false), 3000);
-        return;
-    }
-    window.showToast("กำลังซิงค์ขึ้น Cloud เพื่อให้ทุกคนเปิดดูได้...", false);
-    try {
-        const response = await fetch(SC_API_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
-        });
-        window.showToast("บันทึกขึ้น Cloud สำเร็จ! เปิดจากเครื่องอื่นได้เลย");
-    } catch(e) {
-        window.showToast("อัปโหลด Cloud ไม่สำเร็จ แต่ข้อมูลแสดงผลในเครื่องแล้ว", true);
-        console.error(e);
-    }
+function fireConfetti() {
+    var duration = 3 * 1000;
+    var animationEnd = Date.now() + duration;
+    var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+    function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+    var interval = setInterval(function() {
+        var timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) return clearInterval(interval);
+        var particleCount = 50 * (timeLeft / duration);
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+    }, 250);
 }
 
 // --- Filters & Renders ---
 function updateYearFilterOptions() {
     let years = new Set();
-    [...lineDataRaw, ...scDataRaw].forEach(r => { if(r.start) years.add(r.start.getFullYear()); });
+    // ✅ เพิ่มการเช็คว่าเป็น Date Object ที่ถูกต้องหรือไม่ก่อนเรียกใช้ getFullYear()
+    [...lineDataRaw, ...scDataRaw].forEach(r => { 
+        if(r.start && r.start instanceof Date && !isNaN(r.start)) years.add(r.start.getFullYear()); 
+    });
     let ySelect = document.getElementById('yearFilter'); let currV = ySelect.value;
     ySelect.innerHTML = '<option value="all">ทุกปี</option>';
     Array.from(years).sort().forEach(y => { ySelect.innerHTML += `<option value="${y}">ปี ${y}</option>`; });
@@ -795,7 +785,8 @@ window.applyGlobalFilter = () => {
     let lbl = ''; if(currentYear !== 'all') lbl += `ปี ${currentYear} `; if(currentMonth !== 'all') lbl += `เดือน ${document.getElementById('monthFilter').options[document.getElementById('monthFilter').selectedIndex].text}`;
     document.querySelectorAll('.filter-label').forEach(el => el.innerText = lbl ? `(${lbl.trim()})` : '');
 
-    let filterFunc = d => d.start && (currentYear === 'all' || d.start.getFullYear().toString() === currentYear) && (currentMonth === 'all' || d.start.getMonth().toString() === currentMonth);
+    // ✅ เพิ่มการเช็คเงื่อนไข Date อย่างรัดกุม ป้องกัน Error จอขาว
+    let filterFunc = d => d.start && d.start instanceof Date && !isNaN(d.start) && (currentYear === 'all' || d.start.getFullYear().toString() === currentYear) && (currentMonth === 'all' || d.start.getMonth().toString() === currentMonth);
     
     lineFiltered = lineDataRaw.filter(filterFunc);
     scFiltered = scDataRaw.filter(filterFunc);
@@ -806,10 +797,11 @@ window.applyGlobalFilter = () => {
 
 window.syncData = async () => { 
     window.showToast("กำลังดึงข้อมูลอัปเดตล่าสุดจาก Cloud...", false); 
-    await Promise.all([fetchLineData(), fetchSmartcareData()]);
-    updateYearFilterOptions(); 
-    window.applyGlobalFilter(); 
-    window.showToast("อัปเดตข้อมูลสำเร็จ!"); 
+    try {
+        await Promise.all([fetchLineData(), fetchSmartcareData()]);
+        updateYearFilterOptions(); window.applyGlobalFilter(); 
+        window.showToast("อัปเดตข้อมูลสำเร็จ!"); 
+    } catch(e) { window.showToast("การเชื่อมต่อขัดข้อง", true); }
 };
 
 window.renderUnified = () => {
@@ -890,15 +882,25 @@ window.renderSmartcareDash = () => {
     document.getElementById('sc-ui-sla-done').innerText = overAll.filter(d=>d.status==='Done').length.toLocaleString();
     document.getElementById('sc-ui-sla-pend').innerText = overAll.filter(d=>d.status!=='Done').length.toLocaleString();
 
-    document.getElementById('sc-ui-vote-avg').innerHTML = `${scGlobalVoteAvg.toFixed(1)}<span class="text-sm font-normal opacity-70"> / 5.0</span>`;
-    document.getElementById('sc-ui-vote-stars').innerHTML = Array.from({length:5}, (_,i) => `<i data-lucide="star" class="${i<Math.round(scGlobalVoteAvg) ? 'fill-white text-white' : 'text-white/30'}" style="width:16px;height:16px;"></i>`).join('');
+    // ⭐️ Dynamic Vote Score: โชว์คะแนนตามเดือน
+    let voteKey = 'all';
+    if (currentYear !== 'all' && currentMonth !== 'all') voteKey = `${currentYear}-${currentMonth}`;
+    let displayVote = (scGlobalVoteAvg && scGlobalVoteAvg[voteKey]) ? scGlobalVoteAvg[voteKey] : (scGlobalVoteAvg['all'] || 0);
+    
+    // ถ้ามีการเลือกฟิลเตอร์เฉพาะเดือนแล้วเดือนนั้นไม่มีข้อมูล ให้คะแนนเป็น 0.0
+    if (currentMonth !== 'all' && (!scGlobalVoteAvg[voteKey])) { displayVote = 0; }
 
+    document.getElementById('sc-ui-vote-avg').innerHTML = `${displayVote.toFixed(1)}<span class="text-sm font-normal opacity-70"> / 5.0</span>`;
+    document.getElementById('sc-ui-vote-stars').innerHTML = Array.from({length:5}, (_,i) => `<i data-lucide="star" class="${i<Math.round(displayVote) ? 'fill-white text-white' : 'text-white/30'}" style="width:16px;height:16px;"></i>`).join('');
+
+    // Cat List (Right Mid)
     document.getElementById('sc-ui-cat-list').innerHTML = Object.entries(catMap).sort((a,b)=>b[1].length-a[1].length).map(([cat, items]) => {
         let m=0, t=0; items.forEach(x=>{ if(x.slaDays!==null && x.slaDays!==''){ t++; if(!x.isOverSLA)m++; } });
         let p = t>0 ? Math.round((m/t)*100) : 0; let c = p>=90?'#10b981':(p>=70?'#f59e0b':'#ef4444');
         return `<div><div class="flex justify-between text-[11px] font-medium mb-1"><span class="truncate pr-2">${safeEscape(cat)}</span><span style="color:${c}">${p}% <span class="text-muted font-normal text-[9px]">(${m}/${t})</span></span></div><div class="w-full bg-base rounded-full h-1"><div class="h-full rounded-full" style="width:${p}%; background:${c};"></div></div></div>`;
     }).join('') || '<div class="text-xs text-muted text-center py-4">ไม่มีข้อมูล</div>';
 
+    // Cat Cards (Bot)
     const colors = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'];
     document.getElementById('sc-ui-cat-cards').innerHTML = Object.entries(catMap).sort((a,b)=>b[1].length-a[1].length).slice(0,8).map(([cat, items], i) => {
         let pctTotal = Math.round((items.length/scFiltered.length)*100);
@@ -908,7 +910,7 @@ window.renderSmartcareDash = () => {
     }).join('');
 
     let sortedFac = Object.entries(facMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    const isDark = document.documentElement.classList.contains('dark'); const txtC = isDark ? '#94a3b8' : '#64748b', gridC = isDark ? '#334155' : '#e2e8f0';
+    const isDark = document.body.classList.contains('dark-theme'); const txtC = isDark ? '#94a3b8' : '#64748b', gridC = isDark ? '#334155' : '#e2e8f0';
     if(scChart) scChart.destroy();
     let cSC = document.getElementById('sc-ui-chart'); if(cSC) {
         scChart = new Chart(cSC.getContext('2d'), { type: 'bar', data: { labels: sortedFac.map(x=>x[0]), datasets: [{data: sortedFac.map(x=>x[1]), backgroundColor: '#8b5cf6', borderRadius: 4}] }, options: { indexAxis: 'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales: { x:{grid:{color:gridC}, ticks:{color:txtC}}, y:{grid:{display:false}, ticks:{color:txtC, font:{size:10}}} } } });
@@ -1013,7 +1015,6 @@ window.saveSlaSettings = () => {
     window.showToast('บันทึกเป้าหมาย SLA เรียบร้อย!'); window.applyGlobalFilter(); 
 };
 
-// --- Export PDF & Excel ---
 window.exportOverSLA = (system, format) => {
     let rawData = []; let title = "";
     if (system === 'line') {
@@ -1064,7 +1065,6 @@ window.exportToPDF = (data, title, system) => {
     html2pdf().set(opt).from(container).save().then(() => { document.body.removeChild(container); window.showToast("ส่งออกไฟล์ PDF สำเร็จ!"); }).catch(err => { document.body.removeChild(container); window.showToast("เกิดข้อผิดพลาดในการสร้าง PDF", true); console.error(err); });
 };
 
-// --- Modals ---
 window.openUniversalModal = (source, type, filterVal = null) => {
     let list = []; let title = ""; let isGrand = source === 'grand';
     if(isGrand) {
@@ -1152,12 +1152,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
         if (document.documentElement.classList.contains('dark')) window.toggleTheme();
     }
-    document.getElementById('monthFilter').value = new Date().getMonth().toString();
-    window.showToast("กำลังดึงข้อมูลล่าสุดจาก Cloud...", false); 
-    // โหลด 2 ฝั่งพร้อมกันเพื่อความเร็ว (มี Anti-cache เรียบร้อย)
+    
+    // ตั้งค่าเริ่มต้นตัวกรองเป็น "รวมทุกเดือน (all)" เพื่อไม่ให้ข้อมูลหาย
+    document.getElementById('monthFilter').value = 'all';
+    
+    // ดึงข้อมูล 2 ฝั่งพร้อมกัน (ใช้ Promise.all ให้เร็วขึ้น)
     await Promise.all([fetchLineData(), fetchSmartcareData()]);
-    updateYearFilterOptions(); window.applyGlobalFilter(); 
-    window.showToast("พร้อมใช้งาน");
+    
+    updateYearFilterOptions(); 
+    window.applyGlobalFilter(); 
+    
+    // ปิด Loader หลังจากประมวลผลเสร็จชัวร์ๆ (หน่วงเวลานิดนึงให้ลื่นไหล)
+    setTimeout(() => {
+        const loader = document.getElementById('initialLoader');
+        if(loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 500);
+        }
+        window.showToast("อัปเดตข้อมูลล่าสุดเรียบร้อย!");
+    }, 800);
 });
 </script>
 </body>
