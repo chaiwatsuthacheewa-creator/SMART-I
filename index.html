@@ -177,7 +177,7 @@
         <option value="9">ตุลาคม</option> <option value="10">พฤศจิกายน</option> <option value="11">ธันวาคม</option>
       </select>
       <button class="btn-icon" onclick="window.toggleTheme()" title="สลับโหมดสี"><i data-lucide="moon" id="themeIconMoon"></i><i data-lucide="sun" id="themeIconSun" style="display:none;"></i></button>
-      <button class="btn-icon text-primary hover:border-primary" onclick="window.syncData()" title="ซิงค์ข้อมูล Line ล่าสุด"><i data-lucide="refresh-cw"></i></button>
+      <button class="btn-icon text-primary hover:border-primary" onclick="window.syncData()" title="ซิงค์ข้อมูลล่าสุดจาก Cloud"><i data-lucide="refresh-cw"></i></button>
     </div>
   </header>
 
@@ -226,7 +226,7 @@
             <div class="widget-box border-t-4 border-t-purple-500">
                 <div class="section-title"><i data-lucide="file-spreadsheet" class="text-purple-500"></i> ข้อมูลระบบ Smartcare <span class="text-sm font-normal text-muted ml-auto filter-label"></span></div>
                 <div id="u-smartcare-empty" class="text-center py-8 text-muted">
-                    <i data-lucide="file-x-2" class="mx-auto mb-2 opacity-50" style="width:40px; height:40px;"></i><p class="text-sm">ยังไม่มีข้อมูล Excel</p>
+                    <i data-lucide="file-x-2" class="mx-auto mb-2 opacity-50" style="width:40px; height:40px;"></i><p class="text-sm">ยังไม่มีข้อมูลในระบบ</p>
                 </div>
                 <div id="u-smartcare-data" style="display: none; flex-direction: column;">
                     <div class="grid-2 flex-grow">
@@ -280,14 +280,15 @@
     <div id="view-smartcare" class="view-section">
         <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
             <div class="section-title text-purple-500 m-0"><i data-lucide="file-spreadsheet"></i> แดชบอร์ดประมวลผล Smartcare <span class="text-sm font-normal text-muted ml-2 filter-label"></span></div>
-            <button class="btn-icon w-auto px-4 text-sm border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white" onclick="document.getElementById('scFileInput').click()"><i data-lucide="upload" class="mr-2 w-4 h-4"></i> อัปโหลดไฟล์ Excel</button>
+            <button class="btn-icon w-auto px-4 text-sm border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white shadow-sm" onclick="document.getElementById('scFileInput').click()"><i data-lucide="upload" class="mr-2 w-4 h-4"></i> อัปโหลดและซิงค์ Excel</button>
             <input type="file" id="scFileInput" class="hidden" accept=".xlsx, .xls" onchange="window.handleSmartcareUpload(event)">
         </div>
 
         <div id="sc-upload-prompt" class="widget-box border-dashed border-2 border-purple-500 bg-purple-50 dark:bg-purple-500/10 text-center cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-500/20 transition" onclick="document.getElementById('scFileInput').click()">
             <i data-lucide="file-up" class="mx-auto mb-4 text-purple-500" style="width: 48px; height: 48px;"></i>
             <h3 class="text-lg font-bold mb-2">อัปโหลดไฟล์ ReportTicket (.xlsx)</h3>
-            <p class="text-muted text-sm">ต้องมีชีต <span class="font-bold text-main">Ticket</span> และ <span class="font-bold text-main">Activity</span></p>
+            <p class="text-muted text-sm mb-2">เพื่อคำนวณและอัปเดตข้อมูลขึ้น Cloud (Google Sheet)</p>
+            <p class="text-muted text-xs opacity-70">ต้องมีชีต <span class="font-bold text-main">Ticket</span> และ <span class="font-bold text-main">Activity</span></p>
         </div>
 
         <div id="sc-dash-section" style="display: none; flex-direction: column; gap: 16px;">
@@ -467,7 +468,7 @@
                         <div>หมวดหมู่งาน</div><div class="text-right pr-6">เป้าหมาย (วันทำการ)</div>
                     </div>
                     <div id="setting-sc-sla-list" class="max-h-[400px] overflow-y-auto p-2 space-y-2">
-                        <div class="text-center py-6 text-muted text-sm">กรุณาอัปโหลดไฟล์ Excel ก่อน</div>
+                        <div class="text-center py-6 text-muted text-sm">ยังไม่มีหมวดหมู่ (รอซิงค์ข้อมูล Cloud)</div>
                     </div>
                 </div>
             </div>
@@ -536,12 +537,17 @@
 
 <!-- ================= JAVASCRIPT ================= -->
 <script>
+// ================= API ENDPOINTS =================
 const LINE_API_URL = "https://script.google.com/macros/s/AKfycbygiyeaAfjPr3dfl8JyFd_d-VeyuTfvlHl_PcJk4j-dZZY2lvCIOTC1SrZJ4yMvXau2GA/exec";
+
+// ⚠️ นำ URL จาก Google Apps Script (Smartcare) มาวางในเครื่องหมายคำพูดด้านล่างนี้
+const SC_API_URL = "https://script.google.com/macros/s/AKfycbygiyeaAfjPr3dfl8JyFd_d-VeyuTfvlHl_PcJk4j-dZZY2lvCIOTC1SrZJ4yMvXau2GA/exec"; 
+
 const THAI_HOLIDAYS = [ "2024-01-01", "2024-04-15", "2024-05-01", "2024-12-05", "2025-01-01", "2025-04-14", "2025-04-15", "2025-12-05", "2026-01-01", "2026-04-13", "2026-04-14", "2026-12-05" ];
 
-let lineDataRaw = [], scDataRaw = [], scTicketRaw = [];
+let lineDataRaw = [], scDataRaw = [];
 let lineFiltered = [], scFiltered = [];
-let scGlobalVoteAvg = 0; // คะแนนโหวตอิสระ
+let scGlobalVoteAvg = 0;
 
 let currentYear = 'all', currentMonth = 'all';
 let activeLineTab = 'ari', activeScTab = '';
@@ -572,7 +578,7 @@ const parseDateRobust = (dStr) => {
     let d = new Date(s); return isNaN(d)?null:d;
 };
 const formatDateStr = (d) => d ? `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}` : '-';
-const formatDurDays = (days) => days !== null ? (days >= 1 ? `${days.toFixed(1)} วัน` : `${(days*24).toFixed(1)} ชม.`) : '-';
+const formatDurDays = (days) => (days !== null && days !== '') ? (days >= 1 ? `${parseFloat(days).toFixed(1)} วัน` : `${(parseFloat(days)*24).toFixed(1)} ชม.`) : '-';
 const yieldToMain = () => new Promise(r => setTimeout(r, 0));
 
 let toastTimer;
@@ -609,7 +615,7 @@ window.switchView = (targetId) => {
     if(targetId === 'view-recurring') window.renderRecurringView();
 };
 
-// --- API & Excel Loaders ---
+// --- API Loaders ---
 async function fetchLineData() {
     try {
         const res = await fetch(LINE_API_URL);
@@ -627,7 +633,7 @@ async function fetchLineData() {
                 
                 let durDays = start ? (((end || new Date()) - start) / (1000 * 60 * 60 * 24)) : 0;
                 let targetSla = lineSlaConfig[bCode] || DEFAULT_LINE_SLA;
-                let isOver = durDays > targetSla; // Permanent Over SLA
+                let isOver = durDays > targetSla; 
 
                 return { source: 'line', ticket: String(row.Ticket || '-').trim(), buildingCode: bCode, detail: String(row.Detail || '-').trim(), start: start, lastUpdate: end || start || new Date(0), durDays: durDays, targetSla: targetSla, status: status, isOverSLA: isOver, dateStr: formatDateStr(start) };
             }).sort((a,b) => b.lastUpdate - a.lastUpdate);
@@ -635,6 +641,32 @@ async function fetchLineData() {
     } catch (e) { console.error(e); window.showToast("ดึงข้อมูล Line ไม่สำเร็จ", true); }
 }
 
+async function fetchSmartcareData() {
+    if(!SC_API_URL) return;
+    try {
+        const res = await fetch(SC_API_URL);
+        const data = await res.json();
+        
+        if(data && data.tickets && Array.isArray(data.tickets)) {
+            scGlobalVoteAvg = data.globalVoteAvg || 0;
+            scDataRaw = data.tickets.map(d => {
+                d.start = parseDateRobust(d.start);
+                d.targetSla = scSlaConfig[d.category] || DEFAULT_SC_SLA;
+                if(d.slaDays !== null && d.slaDays !== '') {
+                    d.isOverSLA = parseFloat(d.slaDays) > d.targetSla;
+                }
+                return d;
+            });
+            
+            document.getElementById('sc-upload-prompt').style.display = 'none'; 
+            document.getElementById('sc-dash-section').style.display = 'flex';
+            document.getElementById('u-smartcare-empty').style.display = 'none'; 
+            document.getElementById('u-smartcare-data').style.display = 'flex';
+        }
+    } catch(e) { console.error("Fetch SC Error:", e); }
+}
+
+// --- Excel Process & Cloud Sync ---
 window.handleSmartcareUpload = async (e) => {
     const file = e.target.files[0]; if(!file) return;
     window.showToast("กำลังอ่านไฟล์ Excel...", false);
@@ -666,23 +698,27 @@ function calculateWorkingDays(startD, endD) {
 }
 
 async function processSmartcareStrict(tickets, activities) {
-    // 1. คำนวณ Vote Score อิสระ (ไม่สน SLA Sequence)
+    // 1. Vote Score อิสระ
     let vTotal = 0, vCount = 0;
-    scTicketRaw = tickets; // Keep for description detail
+    const voteMap = new Map();
     tickets.forEach(row => {
         let statusStr = String(row['Status'] || row['สถานะ'] || '').toLowerCase();
-        if (statusStr.includes('cancel')) return; // เตะทิ้ง
+        let tNo = String(row['TicketNo']||'').trim();
         
-        let vScore = 0;
+        let vScore = '-';
         for (let key in row) {
             let cleanKey = key.replace(/\s+/g, '').toLowerCase();
-            if (cleanKey.includes('votescore') || cleanKey.includes('คะแนน')) { vScore = parseFloat(row[key]); break; }
+            if (cleanKey.includes('votescore') || cleanKey.includes('คะแนน')) { vScore = row[key]; break; }
         }
-        if (!isNaN(vScore) && vScore > 0) { vTotal += vScore; vCount++; }
+        if (tNo) voteMap.set(tNo, vScore);
+
+        if (statusStr.includes('cancel')) return; 
+        let vFloat = parseFloat(vScore);
+        if (!isNaN(vFloat) && vFloat > 0) { vTotal += vFloat; vCount++; }
     });
     scGlobalVoteAvg = vCount > 0 ? parseFloat((vTotal / vCount).toFixed(1)) : 0;
 
-    // 2. Map Activities (Sort chronologically)
+    // 2. Map Activities 
     const actMap = new Map();
     activities.forEach(row => {
         let tNo = String(row['TicketNo'] || '').trim(); if(!tNo) return;
@@ -695,12 +731,11 @@ async function processSmartcareStrict(tickets, activities) {
 
     for (let i=0; i < tickets.length; i++) {
         let tRow = tickets[i]; let tNo = String(tRow['TicketNo']||'').trim(); if(!tNo) continue;
+        let finalVoteScore = voteMap.get(tNo) || '-';
         
-        // Find Description
         let descVal = '-';
         for(let k in tRow) { let c=String(k).replace(/\s/g,'').toLowerCase(); if(c.includes('desc')||c.includes('detail')||c.includes('ราย')) {descVal=String(tRow[k]); break;} }
 
-        // Strict Sequence Parsing (Submit -> Accept -> Done)
         let acts = actMap.get(tNo) || []; acts.sort((a,b) => (a.date||0) - (b.date||0));
         let seq = []; let isInvalid = false; let tSubmit = parseDateRobust(tRow['CreateDate']), tAccept = null, tDone = null;
 
@@ -710,16 +745,16 @@ async function processSmartcareStrict(tickets, activities) {
             
             let step = 0;
             if(a.includes('submit')) step = 1; else if(a.includes('accept')) step = 2; else if(a.includes('done') || a.includes('close')) step = 3;
-            else { isInvalid = true; break; } // Drop alien status
+            else { isInvalid = true; break; } 
 
             if(seq.length === 0) { 
                 if(step !== 1) { isInvalid = true; break; } 
                 seq.push(step); tSubmit = act.date || tSubmit; 
             } else {
                 let last = seq[seq.length-1];
-                if(step === last) continue; // Deduplicate
+                if(step === last) continue; 
                 if(step === last + 1) { seq.push(step); if(step === 2) tAccept = act.date; if(step === 3) tDone = act.date; } 
-                else { isInvalid = true; break; } // Sequence broken
+                else { isInvalid = true; break; } 
             }
         }
         
@@ -738,18 +773,45 @@ async function processSmartcareStrict(tickets, activities) {
             let currentDays = calculateWorkingDays(tAccept, new Date()); isSlaMet = currentDays <= targetDays; slaDays = currentDays;
         }
 
-        scParsed.push({ source: 'smartcare', ticket: tNo, category: cat, detail: descVal, faction: bldg, start: tSubmit, status: finalStatus, slaDays: slaDays, targetSla: targetDays, isOverSLA: isSlaMet === false, dateStr: formatDateStr(tSubmit), _original: tRow });
+        scParsed.push({ source: 'smartcare', ticket: tNo, category: cat, detail: descVal, faction: bldg, start: tSubmit, status: finalStatus, slaDays: slaDays, targetSla: targetDays, isOverSLA: isSlaMet === false, dateStr: formatDateStr(tSubmit), voteScore: finalVoteScore });
         if(i % 1000 === 0 && i !== 0) await yieldToMain();
     }
 
     scDataRaw = scParsed.sort((a,b) => (b.start||0) - (a.start||0));
-    window.showToast(`ประมวลผลสำเร็จ! (ได้ ${scDataRaw.length} ใบ, ตัดออก ${dropped} ใบ)`);
+    window.showToast(`ประมวลผลสำเร็จ! ตัดออก ${dropped} ใบ`);
     
     document.getElementById('sc-upload-prompt').style.display = 'none'; document.getElementById('sc-dash-section').style.display = 'flex';
     document.getElementById('u-smartcare-empty').style.display = 'none'; document.getElementById('u-smartcare-data').style.display = 'flex';
     updateYearFilterOptions(); window.applyGlobalFilter();
+    
+    // โยนขึ้น Cloud ทันที!
+    const payloadTickets = scDataRaw.map(d => ({
+        source: d.source, ticket: d.ticket, category: d.category, detail: d.detail, faction: d.faction,
+        start: d.start ? d.start.toISOString() : null, status: d.status, slaDays: d.slaDays, targetSla: d.targetSla, isOverSLA: d.isOverSLA, dateStr: d.dateStr, voteScore: d.voteScore
+    }));
+    await uploadSmartcareToCloud({ globalVoteAvg: scGlobalVoteAvg, tickets: payloadTickets });
 }
 
+async function uploadSmartcareToCloud(payload) {
+    if (!SC_API_URL) {
+        setTimeout(() => window.showToast("แสดงผลเฉพาะในเครื่อง (โปรดใส่ URL Google Sheet ในโค้ดเพื่อใช้งาน Cloud Sync)", false), 3000);
+        return;
+    }
+    window.showToast("กำลังซิงค์ขึ้น Cloud เพื่อให้ทุกคนเปิดดูได้...", false);
+    try {
+        const response = await fetch(SC_API_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
+        });
+        window.showToast("บันทึกขึ้น Cloud สำเร็จ! เปิดจากเครื่องอื่นได้เลย");
+    } catch(e) {
+        window.showToast("อัปโหลด Cloud ไม่สำเร็จ แต่ข้อมูลแสดงผลในเครื่องแล้ว", true);
+        console.error(e);
+    }
+}
+
+// --- Filters & Renders ---
 function updateYearFilterOptions() {
     let years = new Set();
     [...lineDataRaw, ...scDataRaw].forEach(r => { if(r.start) years.add(r.start.getFullYear()); });
@@ -773,9 +835,14 @@ window.applyGlobalFilter = () => {
     window.renderLineBuildings(); window.renderScBuildings(); window.renderRecurringView();
 };
 
-window.syncData = async () => { window.showToast("กำลังซิงค์ Line...", false); await fetchLineData(); updateYearFilterOptions(); window.applyGlobalFilter(); window.showToast("อัปเดตข้อมูล Line ล่าสุดแล้ว!"); };
+window.syncData = async () => { 
+    window.showToast("กำลังดึงข้อมูลอัปเดตล่าสุดจาก Cloud...", false); 
+    await Promise.all([fetchLineData(), fetchSmartcareData()]);
+    updateYearFilterOptions(); 
+    window.applyGlobalFilter(); 
+    window.showToast("อัปเดตข้อมูลสำเร็จ!"); 
+};
 
-// --- RENDERS ---
 window.renderUnified = () => {
     let allData = [...lineFiltered, ...scFiltered];
     document.getElementById('u-grand-total').innerText = allData.length.toLocaleString();
@@ -809,7 +876,6 @@ window.renderLineDash = () => {
         return `<div class="kpi-card text-center" onclick="window.openUniversalModal('line', 'building', '${k}')"><i data-lucide="${b.icon}" style="color:${b.color}; width:28px; margin:0 auto 8px;"></i><div class="font-bold text-lg num">${list.length}</div><div class="text-xs text-muted">${b.name}</div></div>`;
     }).join('');
 
-    // Table: Pending first, then by date
     let sortedLatest = [...lineFiltered].sort((a,b) => (a.status==='pending'?-1:1) || (b.lastUpdate - a.lastUpdate));
     document.getElementById('lineLatestTable').innerHTML = sortedLatest.slice(0,100).map(d=>`
         <tr class="clickable" onclick="window.openLineTicket('${d.ticket}')">
@@ -832,19 +898,17 @@ window.renderLineDash = () => {
 window.renderSmartcareDash = () => {
     if(scDataRaw.length === 0) return;
     
-    // KPI
     document.getElementById('sc-ui-total').innerText = scFiltered.length.toLocaleString();
     let doneList = scFiltered.filter(d=>d.status==='Done');
     document.getElementById('sc-ui-done').innerText = doneList.length.toLocaleString();
     document.getElementById('sc-ui-accept').innerText = scFiltered.filter(d=>d.status==='Accept Task').length.toLocaleString();
     document.getElementById('sc-ui-submit').innerText = scFiltered.filter(d=>d.status==='Submit').length.toLocaleString();
 
-    // SLA Donut & Over SLA
     let metCount = 0, breachCount = 0, catMap = {}, facMap = {};
     scFiltered.forEach(d => {
         if(!facMap[d.faction]) facMap[d.faction] = 0; facMap[d.faction]++;
         if(!catMap[d.category]) catMap[d.category] = []; catMap[d.category].push(d);
-        if(d.slaDays !== null) { if(!d.isOverSLA) metCount++; else breachCount++; }
+        if(d.slaDays !== null && d.slaDays !== '') { if(!d.isOverSLA) metCount++; else breachCount++; }
     });
     
     let totalM = metCount + breachCount; let slaPct = totalM > 0 ? Math.round((metCount / totalM) * 100) : null;
@@ -857,27 +921,23 @@ window.renderSmartcareDash = () => {
     document.getElementById('sc-ui-sla-done').innerText = overAll.filter(d=>d.status==='Done').length.toLocaleString();
     document.getElementById('sc-ui-sla-pend').innerText = overAll.filter(d=>d.status!=='Done').length.toLocaleString();
 
-    // Vote Score (Independent)
     document.getElementById('sc-ui-vote-avg').innerHTML = `${scGlobalVoteAvg.toFixed(1)}<span class="text-sm font-normal opacity-70"> / 5.0</span>`;
     document.getElementById('sc-ui-vote-stars').innerHTML = Array.from({length:5}, (_,i) => `<i data-lucide="star" class="${i<Math.round(scGlobalVoteAvg) ? 'fill-white text-white' : 'text-white/30'}" style="width:16px;height:16px;"></i>`).join('');
 
-    // Cat List (Right Mid)
     document.getElementById('sc-ui-cat-list').innerHTML = Object.entries(catMap).sort((a,b)=>b[1].length-a[1].length).map(([cat, items]) => {
-        let m=0, t=0; items.forEach(x=>{ if(x.slaDays!==null){ t++; if(!x.isOverSLA)m++; } });
+        let m=0, t=0; items.forEach(x=>{ if(x.slaDays!==null && x.slaDays!==''){ t++; if(!x.isOverSLA)m++; } });
         let p = t>0 ? Math.round((m/t)*100) : 0; let c = p>=90?'#10b981':(p>=70?'#f59e0b':'#ef4444');
         return `<div><div class="flex justify-between text-[11px] font-medium mb-1"><span class="truncate pr-2">${safeEscape(cat)}</span><span style="color:${c}">${p}% <span class="text-muted font-normal text-[9px]">(${m}/${t})</span></span></div><div class="w-full bg-base rounded-full h-1"><div class="h-full rounded-full" style="width:${p}%; background:${c};"></div></div></div>`;
     }).join('') || '<div class="text-xs text-muted text-center py-4">ไม่มีข้อมูล</div>';
 
-    // Cat Cards (Bot)
     const colors = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'];
     document.getElementById('sc-ui-cat-cards').innerHTML = Object.entries(catMap).sort((a,b)=>b[1].length-a[1].length).slice(0,8).map(([cat, items], i) => {
         let pctTotal = Math.round((items.length/scFiltered.length)*100);
-        let m=0, t=0; items.forEach(x=>{ if(x.slaDays!==null){ t++; if(!x.isOverSLA)m++; } });
+        let m=0, t=0; items.forEach(x=>{ if(x.slaDays!==null && x.slaDays!==''){ t++; if(!x.isOverSLA)m++; } });
         let slaP = t>0 ? Math.round((m/t)*100) : null; let sTxt = slaP===null?'-':`${slaP}%`;
         return `<div class="sc-card sc-card-hover flex flex-col justify-between" onclick="window.openUniversalModal('smartcare', 'category', '${safeEscape(cat)}')"><div class="flex justify-between items-start mb-4"><div class="font-bold text-[11px] leading-tight line-clamp-2 pr-2">${safeEscape(cat)}</div><div class="text-[9px] font-bold px-1.5 py-0.5 rounded text-indigo-600 bg-indigo-50 dark:bg-indigo-500/20 dark:text-indigo-300">${pctTotal}%</div></div><div><div class="flex items-end justify-between mb-1"><span class="text-2xl font-bold num leading-none">${items.length} <span class="text-[9px] font-normal text-muted">Tickets</span></span><span class="text-[9px] font-bold text-emerald-500">SLA ${sTxt}</span></div><div class="w-full bg-base rounded-full h-1"><div class="h-full rounded-full" style="width:${pctTotal}%; background:${colors[i%colors.length]}"></div></div></div></div>`;
     }).join('');
 
-    // Chart & Table
     let sortedFac = Object.entries(facMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
     const isDark = document.documentElement.classList.contains('dark'); const txtC = isDark ? '#94a3b8' : '#64748b', gridC = isDark ? '#334155' : '#e2e8f0';
     if(scChart) scChart.destroy();
@@ -910,7 +970,7 @@ window.renderScBuildings = () => {
         <tr class="clickable" onclick="window.openTicket('${d.ticket}')">
             <td class="font-bold text-purple-500 num">${d.ticket}</td><td class="text-sm font-medium">${safeEscape(d.faction)}</td><td class="text-sm truncate max-w-[200px]">${safeEscape(d.detail)}</td>
             <td>${d.status==='Done'?'<span class="pill pill-success">Done</span>':(d.status==='Accept Task'?'<span class="pill pill-warning">Accept</span>':'<span class="pill pill-primary">Submit</span>')}</td>
-            <td>${d.isOverSLA ? `<span class="text-danger font-bold text-xs">เกิน SLA</span>` : (d.slaDays !== null ? `<span class="text-success text-xs">ปกติ</span>` : `<span class="text-muted text-xs">-</span>`)}</td>
+            <td>${d.isOverSLA ? `<span class="text-danger font-bold text-xs">เกิน SLA</span>` : ((d.slaDays !== null && d.slaDays !== '') ? `<span class="text-success text-xs">ปกติ</span>` : `<span class="text-muted text-xs">-</span>`)}</td>
         </tr>
     `).join('') || `<tr><td colspan="5" class="text-center py-8 text-muted">ไม่มีข้อมูลของหมวดหมู่นี้</td></tr>`;
     lucide.createIcons();
@@ -963,7 +1023,7 @@ window.renderSettingsPage = () => {
     }).join('');
 
     let scListEl = document.getElementById('setting-sc-sla-list');
-    if(scDataRaw.length === 0) { scListEl.innerHTML = `<div class="text-center py-6 text-muted text-sm">กรุณาอัปโหลดไฟล์ Excel ก่อน</div>`; return; }
+    if(scDataRaw.length === 0) { scListEl.innerHTML = `<div class="text-center py-6 text-muted text-sm">ยังไม่มีหมวดหมู่ (รอซิงค์ข้อมูล Cloud)</div>`; return; }
     let uniqueCats = [...new Set(scDataRaw.map(d => d.category))].sort();
     scListEl.innerHTML = uniqueCats.map(cat => {
         let val = scSlaConfig[cat] || DEFAULT_SC_SLA;
@@ -979,110 +1039,60 @@ window.saveSlaSettings = () => {
     localStorage.setItem('sys_sc_sla_map_v3', JSON.stringify(scSlaConfig));
     
     lineDataRaw.forEach(d => { d.targetSla = lineSlaConfig[d.buildingCode] || DEFAULT_LINE_SLA; d.isOverSLA = d.durDays > d.targetSla; });
-    scDataRaw.forEach(d => { d.targetSla = scSlaConfig[d.category] || DEFAULT_SC_SLA; if(d.slaDays !== null) d.isOverSLA = parseFloat(d.slaDays) > d.targetSla; });
+    scDataRaw.forEach(d => { d.targetSla = scSlaConfig[d.category] || DEFAULT_SC_SLA; if(d.slaDays !== null && d.slaDays !== '') d.isOverSLA = parseFloat(d.slaDays) > d.targetSla; });
 
     window.showToast('บันทึกเป้าหมาย SLA เรียบร้อย!'); window.applyGlobalFilter(); 
 };
 
 // --- Export PDF & Excel ---
 window.exportOverSLA = (system, format) => {
-    let rawData = [];
-    let title = "";
-    
+    let rawData = []; let title = "";
     if (system === 'line') {
         let overList = lineFiltered.filter(d => d.isOverSLA);
         if (overList.length === 0) { window.showToast("ไม่มีงานค้างเกิน SLA ใน Line", true); return; }
         rawData = overList.map(d => ({
-            "Ticket No": d.ticket,
-            "อาคาร (Building)": BUILDINGS[d.buildingCode]?.name || d.buildingCode,
-            "รายละเอียด (Detail)": d.detail,
-            "วันที่รับแจ้ง (Date)": d.dateStr,
-            "สถานะ (Status)": d.status === 'completed' ? 'Done' : 'Pending',
-            "ใช้เวลา (วัน)": d.durDays ? d.durDays.toFixed(2) : 0,
-            "เป้าหมาย SLA": d.targetSla
+            "Ticket No": d.ticket, "อาคาร (Building)": BUILDINGS[d.buildingCode]?.name || d.buildingCode, "รายละเอียด (Detail)": d.detail,
+            "วันที่รับแจ้ง (Date)": d.dateStr, "สถานะ (Status)": d.status === 'completed' ? 'Done' : 'Pending',
+            "ใช้เวลา (วัน)": d.durDays ? d.durDays.toFixed(2) : 0, "เป้าหมาย SLA": d.targetSla
         }));
         title = `Over_SLA_LineBot_${new Date().toISOString().split('T')[0]}`;
     } else {
-        if (scDataRaw.length === 0) { window.showToast("ไม่มีข้อมูล กรุณาอัปโหลดไฟล์ก่อน", true); return; }
+        if (scDataRaw.length === 0) { window.showToast("ไม่มีข้อมูล กรุณาเชื่อมต่อ Cloud หรืออัปโหลดไฟล์", true); return; }
         let overList = scFiltered.filter(d => d.isOverSLA);
         if (overList.length === 0) { window.showToast("ไม่มีงานค้างเกิน SLA ใน Smartcare", true); return; }
         rawData = overList.map(d => ({
-            "Ticket No": d.ticket,
-            "หมวดหมู่ (Category)": d.category,
-            "ฝ่ายแจ้ง (Faction)": d.faction,
-            "รายละเอียด (Detail)": d.detail,
-            "สถานะ (Status)": d.status,
-            "ใช้เวลา (วัน)": d.slaDays ? d.slaDays.toFixed(2) : 0,
-            "เป้าหมาย SLA": d.targetSla
+            "Ticket No": d.ticket, "หมวดหมู่ (Category)": d.category, "ฝ่ายแจ้ง (Faction)": d.faction, "รายละเอียด (Detail)": d.detail,
+            "สถานะ (Status)": d.status, "ใช้เวลา (วัน)": d.slaDays ? parseFloat(d.slaDays).toFixed(2) : 0, "เป้าหมาย SLA": d.targetSla
         }));
         title = `Over_SLA_Smartcare_${new Date().toISOString().split('T')[0]}`;
     }
 
     if (format === 'excel') {
-        const ws = XLSX.utils.json_to_sheet(rawData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Over SLA");
-        XLSX.writeFile(wb, `${title}.xlsx`);
+        const ws = XLSX.utils.json_to_sheet(rawData); const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Over SLA"); XLSX.writeFile(wb, `${title}.xlsx`);
         window.showToast("ส่งออกไฟล์ Excel สำเร็จ");
-    } else if (format === 'pdf') {
-        window.exportToPDF(rawData, title, system);
-    }
+    } else if (format === 'pdf') { window.exportToPDF(rawData, title, system); }
 };
 
 window.exportToPDF = (data, title, system) => {
     window.showToast("กำลังประมวลผล PDF...", false);
-    
-    const container = document.createElement('div');
-    container.style.padding = '30px';
-    container.style.fontFamily = "'Prompt', sans-serif";
-    container.style.background = '#ffffff';
-    container.style.width = '1000px'; 
-    container.style.color = '#000000';
-
-    const sysName = system === 'line' ? 'Line Bot' : 'Smartcare';
-    const color = system === 'line' ? '#3b82f6' : '#8b5cf6';
-    
+    const container = document.createElement('div'); container.style.padding = '30px'; container.style.fontFamily = "'Prompt', sans-serif"; container.style.background = '#ffffff'; container.style.width = '1000px'; container.style.color = '#000000';
+    const sysName = system === 'line' ? 'Line Bot' : 'Smartcare'; const color = system === 'line' ? '#3b82f6' : '#8b5cf6';
     let html = `
         <div style="text-align: center; margin-bottom: 20px;">
             <h2 style="color: ${color}; margin-bottom: 5px; font-size: 24px; font-weight: bold;">รายงานงานซ่อมที่ล่าช้าเกินกำหนด (Over SLA)</h2>
             <p style="color: #64748b; font-size: 14px;">ระบบ: <b>${sysName}</b> | ออกรายงานเมื่อ: ${new Date().toLocaleDateString('th-TH')}</p>
         </div>
         <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
-            <thead>
-                <tr style="background-color: ${color}; color: #ffffff;">
+            <thead><tr style="background-color: ${color}; color: #ffffff;">
     `;
-    
-    const keys = Object.keys(data[0]);
-    keys.forEach(k => { html += `<th style="padding: 10px; border: 1px solid #e2e8f0; white-space: nowrap;">${k}</th>`; });
+    const keys = Object.keys(data[0]); keys.forEach(k => { html += `<th style="padding: 10px; border: 1px solid #e2e8f0; white-space: nowrap;">${k}</th>`; });
     html += `</tr></thead><tbody>`;
-    
-    data.forEach((row, i) => {
-        const bg = i % 2 === 0 ? '#f8fafc' : '#ffffff';
-        html += `<tr style="background-color: ${bg};">`;
-        keys.forEach(k => { html += `<td style="padding: 10px; border: 1px solid #e2e8f0; vertical-align: top;">${safeEscape(row[k])}</td>`; });
-        html += `</tr>`;
-    });
-    
-    html += `</tbody></table>`;
-    container.innerHTML = html;
-    document.body.appendChild(container);
+    data.forEach((row, i) => { const bg = i % 2 === 0 ? '#f8fafc' : '#ffffff'; html += `<tr style="background-color: ${bg};">`; keys.forEach(k => { html += `<td style="padding: 10px; border: 1px solid #e2e8f0; vertical-align: top;">${safeEscape(row[k])}</td>`; }); html += `</tr>`; });
+    html += `</tbody></table>`; container.innerHTML = html; document.body.appendChild(container);
 
-    const opt = {
-        margin:       10,
-        filename:     `${title}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, logging: false },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    };
-
-    html2pdf().set(opt).from(container).save().then(() => {
-        document.body.removeChild(container);
-        window.showToast("ส่งออกไฟล์ PDF สำเร็จ!");
-    }).catch(err => {
-        document.body.removeChild(container);
-        window.showToast("เกิดข้อผิดพลาดในการสร้าง PDF", true);
-        console.error(err);
-    });
+    const opt = { margin: 10, filename: `${title}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, logging: false }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } };
+    html2pdf().set(opt).from(container).save().then(() => { document.body.removeChild(container); window.showToast("ส่งออกไฟล์ PDF สำเร็จ!"); }).catch(err => { document.body.removeChild(container); window.showToast("เกิดข้อผิดพลาดในการสร้าง PDF", true); console.error(err); });
 };
 
 // --- Modals ---
@@ -1101,7 +1111,7 @@ window.openUniversalModal = (source, type, filterVal = null) => {
     let thead = isGrand ? `<tr><th>ระบบ</th><th>Ticket</th><th>รายละเอียด</th><th>วันที่</th><th>สถานะ</th><th>SLA</th></tr>` : (source==='line' ? `<tr><th>Ticket</th><th>อาคาร</th><th>รายละเอียด</th><th>สถานะ</th><th>SLA</th></tr>` : `<tr><th>Ticket</th><th>หมวดหมู่</th><th>รายละเอียด</th><th>สถานะ</th><th>SLA</th></tr>`);
     document.getElementById('um-thead').innerHTML = thead;
     document.getElementById('um-tbody').innerHTML = list.slice(0, 150).map(d => {
-        let slaBad = d.isOverSLA ? `<span class="text-danger font-bold text-xs">เกิน SLA</span>` : (d.slaDays !== null || d.durDays !== undefined ? `<span class="text-success text-xs">ปกติ</span>` : `<span class="text-muted text-xs">-</span>`);
+        let slaBad = d.isOverSLA ? `<span class="text-danger font-bold text-xs">เกิน SLA</span>` : ((d.slaDays !== null && d.slaDays !== '') || d.durDays !== undefined ? `<span class="text-success text-xs">ปกติ</span>` : `<span class="text-muted text-xs">-</span>`);
         let trHtml = `<tr>`;
         if(isGrand) trHtml += `<td>${d._sys==='Line'?'<span class="pill pill-primary">Line</span>':'<span class="pill" style="background:rgba(139,92,246,0.1); color:var(--purple)">SC</span>'}</td><td class="font-bold num">${d.ticket}</td><td class="truncate max-w-[150px] text-sm">${safeEscape(d.detail)}</td><td class="num">${d.dateStr}</td><td>${(d.status==='completed'||d.status==='Done')?'<span class="pill pill-success">Done</span>':'<span class="pill pill-warning">Pending</span>'}</td><td>${slaBad}</td>`;
         else if(source==='line') trHtml += `<td class="font-bold text-primary num">${d.ticket}</td><td class="font-medium text-sm"><i data-lucide="${BUILDINGS[d.buildingCode].icon}" class="inline w-3 h-3 mr-1"></i>${BUILDINGS[d.buildingCode].name}</td><td class="truncate max-w-[200px] text-sm">${safeEscape(d.detail)}</td><td>${d.status==='completed'?'<span class="pill pill-success">Done</span>':'<span class="pill pill-warning">Pending</span>'}</td><td>${slaBad}</td>`;
@@ -1122,15 +1132,8 @@ window.openTicket = (tNo) => {
     document.getElementById('tm-system-label').innerText = 'รายละเอียดงานซ่อมเจาะลึก (Smartcare)';
     document.getElementById('tm-no').innerText = d.ticket; document.getElementById('tm-no').className = 'font-bold text-xl text-purple-500 num';
     let sCol = d.isOverSLA ? 'text-danger' : 'text-success';
-    let sTxt = d.isOverSLA ? `เกิน SLA (${formatDurDays(d.slaDays)})` : (d.slaDays !== null ? `ตรงเวลา (${formatDurDays(d.slaDays)})` : 'ยังวัดผลไม่ได้');
+    let sTxt = d.isOverSLA ? `เกิน SLA (${formatDurDays(d.slaDays)})` : ((d.slaDays !== null && d.slaDays !== '') ? `ตรงเวลา (${formatDurDays(d.slaDays)})` : 'ยังวัดผลไม่ได้');
     
-    // Find Vote specifically for this ticket from Raw data to display in detail
-    let vScore = '-';
-    for (let key in d._original) {
-        let cleanKey = key.replace(/\s+/g, '').toLowerCase();
-        if (cleanKey.includes('votescore') || cleanKey.includes('คะแนน')) { vScore = d._original[key]; break; }
-    }
-
     let html = `
         <div class="flex gap-2 mb-6">
             <span class="pill ${d.status==='Done'?'pill-success':(d.status==='Accept Task'?'pill-warning':'pill-primary')}">${d.status}</span>
@@ -1143,7 +1146,7 @@ window.openTicket = (tNo) => {
         <div class="grid-2 gap-4 mb-6">
             <div class="ticket-field-box"><div class="ticket-field-label">หมวดหมู่งาน</div><div class="ticket-field-val">${safeEscape(d.category)}</div></div>
             <div class="ticket-field-box"><div class="ticket-field-label">วันที่แจ้ง</div><div class="ticket-field-val num">${d.dateStr}</div></div>
-            <div class="ticket-field-box"><div class="ticket-field-label">คะแนนโหวต (Vote Score)</div><div class="ticket-field-val num text-purple-500">${vScore}</div></div>
+            <div class="ticket-field-box"><div class="ticket-field-label">คะแนนโหวต (Vote Score)</div><div class="ticket-field-val num text-purple-500">${d.voteScore || '-'}</div></div>
             <div class="ticket-field-box"><div class="ticket-field-label">สถานะ SLA (เป้า ${d.targetSla} วัน)</div><div class="ticket-field-val num ${sCol}">${sTxt}</div></div>
         </div>
     `;
@@ -1177,14 +1180,15 @@ window.closeTicketModal = () => document.getElementById('ticketModal').classList
 
 document.addEventListener('DOMContentLoaded', async () => {
     lucide.createIcons();
-    // System check for preferred color scheme
     if(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-        if (document.documentElement.classList.contains('dark')) {
-            window.toggleTheme();
-        }
+        if (document.documentElement.classList.contains('dark')) window.toggleTheme();
     }
     document.getElementById('monthFilter').value = new Date().getMonth().toString();
-    window.showToast("กำลังเตรียมระบบ...", false); await fetchLineData(); updateYearFilterOptions(); window.applyGlobalFilter(); window.showToast("พร้อมใช้งาน");
+    window.showToast("กำลังดึงข้อมูลล่าสุดจาก Cloud...", false); 
+    // โหลด 2 ฝั่งพร้อมกันเพื่อความเร็ว
+    await Promise.all([fetchLineData(), fetchSmartcareData()]);
+    updateYearFilterOptions(); window.applyGlobalFilter(); 
+    window.showToast("พร้อมใช้งาน");
 });
 </script>
 </body>
